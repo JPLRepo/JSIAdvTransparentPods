@@ -1,0 +1,12 @@
+﻿V0.1.3.0 (now released as a seperate mod/repro from Raster Prop Monitor)
+Fixed broken Transparent Shader and Opaque Shader swapping functionality.
+Fixed camera jitters/lag on Transparent IVAs that are not part of the active vessel in flight.
+Fixed ON/OFF/AUTO functionality in the Editor.
+V0.1.2.0 (released under RPM V0.25.x)
+Lots of bug fixes. Fix issues with portrait camera processing.
+Fix bugs with settings file. Settings file now changed to default to show transparent pods on all loaded parts, and fixed logic for
+processing.
+V0.1.1.0 (released under RPM V0.25.0)
+JSITransparentPod is now obsolete (sorry for the short notice). Support for it has been removed from RasterPropMonitor. 
+To replace it, JSIAdvTransparentPod, in its own DLL, is now included in the RPM distribution. 
+The new module takes advantage of the stock cutaway functionality.
