@@ -15,7 +15,7 @@
  * the Free Software Foundation, either version 3 of the License, revision
  * date 29 June 2007, or (at your option) any later version.
  * 
- * RJSIAdvTransparentPods is distributed in the hope that it will be useful, but
+ * JSIAdvTransparentPods is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
@@ -24,6 +24,7 @@
  * along with JSIAdvTransparentPods.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 using System;
+using System.Collections;
 using UnityEngine;
 using System.Linq;
 using System.Reflection;
@@ -181,27 +182,20 @@ namespace JSIAdvTransparentPods
                     return false;
             }
         }
-
-        internal static bool IsIVAObstructed(Transform Origin, Transform Target)
+        
+        internal static IEnumerator drawLine(Vector3 start, Vector3 end, Color color, float duration = 0.2f)
         {
-            float distance = Vector3.Distance(Target.position, Origin.position);
-            RaycastHit[] hitInfo;
-            Vector3 direction = (Target.position - Origin.position).normalized;
-
-            hitInfo = Physics.RaycastAll(new Ray(Origin.position, direction), distance, 1148433);
-            
-                for (int i = 0; i < hitInfo.Length; i++)
-                {
-                    Log_Debug("View Obstructed by {0} , Origin: {1} , Target {2} , Direction {3} , Hit: {4}",
-                        hitInfo[i].collider.name, Origin.position, Target.position, direction, hitInfo[i].transform.position);
-                    if (Origin.position != hitInfo[i].transform.position)
-                    {
-                        return true;
-                    }
-                }
-            
-            Log_Debug("No View obstruction");
-            return false;
+            GameObject myLine = new GameObject();
+            myLine.transform.position = start;
+            myLine.AddComponent<LineRenderer>();
+            LineRenderer lr = myLine.GetComponent<LineRenderer>();
+            lr.material = new Material(Shader.Find("Particles/Additive"));
+            lr.SetColors(color, color);
+            lr.SetWidth(0.1f, 0.1f);
+            lr.SetPosition(0, start);
+            lr.SetPosition(1, end);
+            yield return new WaitForSeconds(duration);
+            GameObject.Destroy(myLine);
         }
 
         #region Logging

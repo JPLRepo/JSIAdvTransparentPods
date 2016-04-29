@@ -1,4 +1,29 @@
-﻿using System;
+﻿/*****************************************************************************
+ * JSIAdvTransparentPods
+ * =====================
+ * Plugin for Kerbal Space Program
+ *
+ * Re-Written by JPLRepo (Jamie Leighton).
+ * Based on original JSITransparentPod by Mihara (Eugene Medvedev), 
+ * MOARdV, and other contributors
+ * JSIAdvTransparentPods has been split off from the main RasterPropMonitor
+ * project and distrubtion files and will be maintained and distributed 
+ * separately going foward. But as with all free software the license 
+ * continues to be the same as the original RasterPropMonitor license:
+ * JSIAdvTransparentPods is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, revision
+ * date 29 June 2007, or (at your option) any later version.
+ * 
+ * JSIAdvTransparentPods is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with JSIAdvTransparentPods.  If not, see <http://www.gnu.org/licenses/>.
+ ****************************************************************************/
+ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,7 +37,7 @@ namespace JSIAdvTransparentPods
     public class LoadGlobals : MonoBehaviour
     {
         public static LoadGlobals Instance;
-        internal static Settings settings;
+        public static Settings settings;
         private string globalConfigFilename;
         private ConfigNode globalNode = new ConfigNode();
 
@@ -70,13 +95,13 @@ namespace JSIAdvTransparentPods
         #endregion Assembly/Class Information
     }
 
-    internal class Settings
+    public class Settings
     {
         // this class stores the DeepFreeze Settings from the config file.
         private const string configNodeName = "JSIAdvTransparentPodsSettings";
 
-        internal bool DebugLogging { get; set; }
-        internal bool LoadedInactive { get; set; }
+        internal bool DebugLogging;
+        public bool LoadedInactive;
 
 
 

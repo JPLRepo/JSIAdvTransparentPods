@@ -15,7 +15,7 @@
  * the Free Software Foundation, either version 3 of the License, revision
  * date 29 June 2007, or (at your option) any later version.
  * 
- * RJSIAdvTransparentPods is distributed in the hope that it will be useful, but
+ * JSIAdvTransparentPods is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
@@ -84,6 +84,7 @@ namespace JSIAdvTransparentPods
         private float distanceToCamera;
         private int frameCounter = 0;
         private Quaternion MagicalVoodooRotation = new Quaternion(0, 0.7f, -0.7f, 0);  //We still need this for Editor Mode?
+        public bool isIVAobstructed = false;
 
 
         public override string GetInfo()
@@ -127,10 +128,6 @@ namespace JSIAdvTransparentPods
                 // I'm not sure if this change is actually needed, even. Main Camera's culling mask seems to already include IVA objects,
                 // they just don't normally spawn them.
                 JSIAdvPodsUtil.SetCameraCullingMaskForIVA("Main Camera", true);
-            }
-            else
-            {
-                GameEvents.onVesselChange.Add(CheckStowaways);
             }
 
             // If the internal model has not yet been created, try creating it and log the exception if we fail.
@@ -243,7 +240,7 @@ namespace JSIAdvTransparentPods
 
         public void OnDestroy()
         {
-            GameEvents.onVesselChange.Remove(CheckStowaways);
+            
         }
 
         private void SetShaders(bool state)
@@ -293,12 +290,17 @@ namespace JSIAdvTransparentPods
 
         public void LateUpdate()
         {
-            if (Time.timeSinceLevelLoad < 1f) return;
-            
+            if (Time.timeSinceLevelLoad < 5f) return;
+
             //Reset the mouseOver flag.
             mouseOver = false;
+
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                ProcessPortraits(vessel);
+            }
         }
-        
+
         private void ResetIVA()
         {
             try
@@ -344,7 +346,7 @@ namespace JSIAdvTransparentPods
             
         }
 
-        public void CheckStowaways(Vessel vsl)
+        public void ProcessPortraits(Vessel vsl)
         {
             // Now we need to make sure that the list of portraits in the GUI conforms to what actually is in the active vessel.
             // This is important because IVA/EVA buttons clicked on kerbals that are not in the active vessel cause problems
@@ -352,7 +354,7 @@ namespace JSIAdvTransparentPods
             
             // Only the pods that are not the active vessel should be doing this. So if this part/vessel is not part of the active vessel then:-
             //Search the seats and where there is a kerbalRef try to Unregister them from the PortraitGallery.
-            if (FlightGlobals.ActiveVessel.id != vessel.id && part.internalModel != null)
+            if (part.internalModel != null)
             {
                 for (int i = 0; i < part.internalModel.seats.Count; i++)
                 {
@@ -360,165 +362,205 @@ namespace JSIAdvTransparentPods
                     {
                         try
                         {
-                            Portraits.DestroyPortrait(part.internalModel.seats[i].kerbalRef);
+                            if (FlightGlobals.ActiveVessel.id != vessel.id)
+                                Portraits.DestroyPortrait(part.internalModel.seats[i].kerbalRef);
+                            if (FlightGlobals.ActiveVessel.id == vessel.id)
+                                Portraits.RestorePortrait(part, part.internalModel.seats[i].kerbalRef);
                         }
                         catch (Exception)
                         {
-                            JSIAdvPodsUtil.Log_Debug("Unregister Portrait on inactive part failed {0}", part.internalModel.seats[i].kerbalRef.crewMemberName);
+                            JSIAdvPodsUtil.Log_Debug("Un/Register Portrait on inactive part failed {0}", part.internalModel.seats[i].kerbalRef.crewMemberName);
                         }
                     }
                 }
             }
         }
 
-        public override void OnUpdate()
+        public void Update()
         {
             if (Time.timeSinceLevelLoad < 1f) return;
 
             // In the editor, none of this logic should matter, even though the IVA probably exists already.
             if (HighLogic.LoadedSceneIsEditor)
             {
-                // Make the internal model visible...
-                part.internalModel.SetVisible(true);
-                // And for a good measure we make sure the shader change has been applied.
-                SetShaders(true);
-                // Now we attach the restored IVA directly into the pod at zero local coordinates and rotate it,
-                // so that it shows up on the main outer view camera in the correct location.
-                VoodooRotate();
-                setVisible = true;
+                if (transparentPodSetting == "ON" || (transparentPodSetting == "AUTO" && mouseOver))
+                {
+                    // Make the internal model visible...
+                    if (part.internalModel != null)
+                        part.internalModel.SetVisible(true);
+                    // And for a good measure we make sure the shader change has been applied.
+                    SetShaders(true);
+                    // Now we attach the restored IVA directly into the pod at zero local coordinates and rotate it,
+                    // so that it shows up on the main outer view camera in the correct location.
+                    VoodooRotate();
+                    setVisible = true;
+                }
 
                 // If we are in editor mode we need to turn off the internal if the internal is in OFF or AUTO mode and not moused over.
                 //Otherwise we make it visible.
                 if (transparentPodSetting == "OFF" || (transparentPodSetting == "AUTO" && !mouseOver))
                 {
-                    SetShaders(false);
+
+                    // Make the internal model Invisible...
                     if (part.internalModel != null)
                         part.internalModel.SetVisible(false);
+                    SetShaders(false);
                     setVisible = false;
                 }
-                
+
+                //Turn the DepthMasks off in the Editor or we get Z-Fighting.
                 EditorSetDepthMaskOff();
-
-                return;
             }
+        }
+
+        public override void OnUpdate()
+        {
+            if (Time.timeSinceLevelLoad < 1f) return;
             
-
-            //Now FlightScene Processing
-
-            // If the root part changed, or the IVA is mysteriously missing, we reset it and take note of where it ended up.
-            if (vessel.rootPart != knownRootPart || lastActiveVessel != FlightGlobals.ActiveVessel || part.internalModel == null)
+            if (HighLogic.LoadedSceneIsFlight)
             {
-                ResetIVA();
-            }
+                //Now FlightScene Processing
+                isIVAobstructed = false;
 
-            //If we are in flight and the user has the Stock Overlay on and this part is not part of the active vessel we turn off the internal.
-            // also if the user has set the LoadedInactive to False - we don't show TransparentPods that aren't on the active vessel.
-            // We turn it off rather than registering it for the PreCull list because if Stock Overlay is on the JSI camera is not active.
-            if (CameraManager.Instance != null && InternalSpace.Instance != null)
-            {
-                if (!vessel.isActiveVessel && (JSIAdvTransparentPods.Instance.StockOverlayCamIsOn || !LoadGlobals.settings.LoadedInactive))
+                // If the root part changed, or the IVA is mysteriously missing, we reset it and take note of where it ended up.
+                if (vessel.rootPart != knownRootPart || lastActiveVessel != FlightGlobals.ActiveVessel ||
+                    part.internalModel == null)
                 {
-                    if (part.internalModel != null)
-                        part.internalModel.SetVisible(false);
-                    setVisible = false;
-                    SetShaders(false);
-                    JSIAdvPodsUtil.Log_Debug("Internal turned off as vessel is Not Active Vessel and stock overlay is on or LoadedInactive is False: ({0}) {1}", part.craftID, vessel.vesselName);
-                    return;
+                    ResetIVA();
                 }
 
-                //For some reason (probably performance) Squad do not actively update the position and rotation of InternalModels that are not part of the active vessel.
-                if (!vessel.isActiveVessel)
+                // So we do have an internal model, right?
+                if (part.internalModel != null)
                 {
-                    //Calculate the Vessel position and rotation and then apply that to the InternalModel position and rotation with the MagicalVoodooRotation.
-                    if (part.internalModel != null)
-                    {
-                        Vector3 VesselPosition = part.vessel.transform.position + part.vessel.transform.rotation * part.orgPos;
-                        part.internalModel.transform.position = InternalSpace.WorldToInternal(VesselPosition);
-                        Quaternion VesselRotation = part.vessel.transform.rotation * part.orgRot;
-                        part.internalModel.transform.rotation = InternalSpace.WorldToInternal(VesselRotation) * MagicalVoodooRotation;
-                    }
-                }
-            }
-
-            // If transparentPodSetting = OFF or AUTO and not the focused active part we treat the part like a non-transparent part.
-            // and we turn off the shaders (if set) and the internal to the filter list and exit OnUpdate. 
-            if (transparentPodSetting == "OFF" || (transparentPodSetting == "AUTO" && !mouseOver))
-            {
-                SetShaders(false);
-                //part.internalModel.SetVisible(false);
-                if (!JSIAdvTransparentPods.Instance.PartstoFilterfromIVADict.Contains(part))
-                    JSIAdvTransparentPods.Instance.PartstoFilterfromIVADict.Add(part);
-                setVisible = false;
-                return;
-            }
-            
-            // So we do have an internal model, right?
-            if (part.internalModel != null)
-            {
-                // If the current part is not part of the active vessel, we calculate the distance from the part to the flight camera.
-                // If this distance is > distanceToCameraThreshold metres we turn off transparency for the part.
-                // Uses Maths calcs intead of built in Unity functions as this is up to 5 times faster.
-                if (!vessel.isActiveVessel)
-                {
-                    Vector3 heading;
-                    Transform thisPart = part.transform;
-                    Transform flightCamera = FlightCamera.fetch.transform;
-                    heading.x = thisPart.position.x - flightCamera.position.x;
-                    heading.y = thisPart.position.y - flightCamera.position.y;
-                    heading.z = thisPart.position.z - flightCamera.position.z;
-                    var distanceSquared = heading.x * heading.x + heading.y * heading.y + heading.z * heading.z;
-                    distanceToCamera = Mathf.Sqrt(distanceSquared);
-
-                    if (distanceToCamera > distanceToCameraThreshold)
+                    // If transparentPodSetting = OFF or AUTO and not the focused active part we treat the part like a non-transparent part.
+                    // and we turn off the shaders (if set) and the internal to the filter list and exit OnUpdate. 
+                    if (transparentPodSetting == "OFF" || (transparentPodSetting == "AUTO" && !mouseOver))
                     {
                         SetShaders(false);
-                        //part.internalModel.SetVisible(false);
-                        if (!JSIAdvTransparentPods.Instance.PartstoFilterfromIVADict.Contains(part))
-                            JSIAdvTransparentPods.Instance.PartstoFilterfromIVADict.Add(part);
+                        if (!JSIAdvTransparentPods.PartstoFilterfromIVADict.Contains(part))
+                            JSIAdvTransparentPods.PartstoFilterfromIVADict.Add(part);
                         setVisible = false;
                         return;
                     }
-                }
 
-                //If inactive vessel IVAs are turned on via the settings then we:
-                //Check for obstructions between this IVA and the Camera that may be on lower layers and turn off the IVA if there is one.
-                //Not a perfect solution..... and bad performance-wise. 
-                if (LoadGlobals.settings.LoadedInactive)
-                {
-                    if (JSIAdvTransparentPods.Instance != null && setVisible && CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Flight)
+                    //If we are in flight and the user has the Stock Overlay on and this part is not part of the active vessel we turn off the internal.
+                    // also if the user has set the LoadedInactive to False - we don't show TransparentPods that aren't on the active vessel.
+                    // We turn it off rather than registering it for the PreCull list because if Stock Overlay is on the JSI camera is not active.
+                    if (!vessel.isActiveVessel &&
+                            (JSIAdvTransparentPods.Instance.StockOverlayCamIsOn || !LoadGlobals.settings.LoadedInactive))
                     {
-                        if (JSIAdvTransparentPods.Instance.IVAcameraTransform != null)
+                        part.internalModel.SetVisible(false);
+                        setVisible = false;
+                        SetShaders(false);
+                        JSIAdvPodsUtil.Log_Debug(
+                            "Internal turned off as vessel is Not Active Vessel and stock overlay is on or LoadedInactive is False: ({0}) {1}",
+                            part.craftID, vessel.vesselName);
+                        return;
+                    }
+                    
+                    if (!vessel.isActiveVessel)
+                    {
+                        //For some reason (probably performance) Squad do not actively update the position and rotation of InternalModels that are not part of the active vessel.
+                        //Calculate the Vessel position and rotation and then apply that to the InternalModel position and rotation with the MagicalVoodooRotation.
+                        Vector3 VesselPosition = part.vessel.transform.position +
+                                                    part.vessel.transform.rotation * part.orgPos;
+                        part.internalModel.transform.position = InternalSpace.WorldToInternal(VesselPosition);
+                        Quaternion VesselRotation = part.vessel.transform.rotation * part.orgRot;
+                        part.internalModel.transform.rotation = InternalSpace.WorldToInternal(VesselRotation) *
+                                                                MagicalVoodooRotation;
+
+                        // If the current part is not part of the active vessel, we calculate the distance from the part to the flight camera.
+                        // If this distance is > distanceToCameraThreshold metres we turn off transparency for the part.
+                        // Uses Maths calcs intead of built in Unity functions as this is up to 5 times faster.
+                        Vector3 heading;
+                        Transform thisPart = part.transform;
+                        Transform flightCamera = FlightCamera.fetch.transform;
+                        heading.x = thisPart.position.x - flightCamera.position.x;
+                        heading.y = thisPart.position.y - flightCamera.position.y;
+                        heading.z = thisPart.position.z - flightCamera.position.z;
+                        var distanceSquared = heading.x*heading.x + heading.y*heading.y + heading.z*heading.z;
+                        distanceToCamera = Mathf.Sqrt(distanceSquared);
+
+                        if (distanceToCamera > distanceToCameraThreshold)
                         {
-                            Transform IVAtoWorld = new GameObject().transform;
-                            IVAtoWorld.position = InternalSpace.InternalToWorld(part.internalModel.transform.position);
-                            IVAtoWorld.rotation = InternalSpace.InternalToWorld(part.internalModel.transform.rotation);
-                            Transform IVACameratoWorld = new GameObject().transform;
-                            IVACameratoWorld.position = InternalSpace.InternalToWorld(JSIAdvTransparentPods.Instance.IVAcameraTransform.position);
-                            IVAtoWorld.rotation = InternalSpace.InternalToWorld(JSIAdvTransparentPods.Instance.IVAcameraTransform.rotation);
-                            if (JSIAdvPodsUtil.IsIVAObstructed(IVAtoWorld, JSIAdvTransparentPods.Instance.IVAcameraTransform))
-                            {
-                                if (!JSIAdvTransparentPods.Instance.PartstoFilterfromIVADict.Contains(part))
-                                    JSIAdvTransparentPods.Instance.PartstoFilterfromIVADict.Add(part);
-                            }
-                            IVAtoWorld.gameObject.DestroyGameObject();
-                            IVACameratoWorld.gameObject.DestroyGameObject();
+                            SetShaders(false);
+                            //part.internalModel.SetVisible(false);
+                            if (!JSIAdvTransparentPods.PartstoFilterfromIVADict.Contains(part))
+                                JSIAdvTransparentPods.PartstoFilterfromIVADict.Add(part);
+                            setVisible = false;
+                            return;
                         }
                     }
+
+                    //If inactive vessel IVAs are turned on via the settings then we:
+                    //Check for obstructions between this IVA and the Camera that may be on lower layers and turn off the IVA if there is one.
+                    //Not a perfect solution..... and bad performance-wise. 
+                    if (LoadGlobals.settings.LoadedInactive)
+                    {
+                        if (JSIAdvTransparentPods.Instance != null && 
+                            CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Flight)
+                        {
+                            if (JSIAdvTransparentPods.Instance.MaincameraTransform != null)
+                            {
+                                isIVAobstructed = IsIVAObstructed(part.transform,JSIAdvTransparentPods.Instance.MaincameraTransform);
+                                if (isIVAobstructed)
+                                {
+                                    if (!JSIAdvTransparentPods.PartstoFilterfromIVADict.Contains(part))
+                                        JSIAdvTransparentPods.PartstoFilterfromIVADict.Add(part);
+                                    SetShaders(false);
+                                    setVisible = false;
+                                    return;
+                                }
+                            }
+                        }
+                    }
+
+                    // Make the internal model visible...
+                    // And for a good measure we make sure the shader change has been applied.
+                    SetShaders(true);
+                    if (JSIAdvTransparentPods.PartstoFilterfromIVADict.Contains(part))
+                        JSIAdvTransparentPods.PartstoFilterfromIVADict.Remove(part);
+                    setVisible = true;
+                    part.internalModel.SetVisible(true);
                 }
-                
-                // Make the internal model visible...
-                // And for a good measure we make sure the shader change has been applied.
-                SetShaders(true);
-                if (JSIAdvTransparentPods.Instance.PartstoFilterfromIVADict.Contains(part))
-                    JSIAdvTransparentPods.Instance.PartstoFilterfromIVADict.Remove(part);
-                setVisible = true;
-                part.internalModel.SetVisible(true); 
-            }
-            else
-            {
-                JSIAdvPodsUtil.Log("Where is my Internal model for : {0}" , part.craftID);
+                else
+                {
+                    JSIAdvPodsUtil.Log("Where is my Internal model for : {0}", part.craftID);
+                }
             }
         }
+
+        internal bool IsIVAObstructed(Transform Origin, Transform Target)
+        {
+            float distance = Vector3.Distance(Target.position, Origin.position);
+            RaycastHit[] hitInfo;
+            Vector3 direction = (Target.position - Origin.position).normalized;
+            #if LINEDEBUG
+            drawMyLine(Origin.position, Target.position, Color.yellow, 1f);
+            #endif
+            hitInfo = Physics.RaycastAll(new Ray(Origin.position, direction), distance, 1148433);
+
+            for (int i = 0; i < hitInfo.Length; i++)
+            {
+                
+                JSIAdvPodsUtil.Log_Debug("View Obstructed by {0} , Origin: {1} , Target {2} , Direction {3} , Hit: {4}",
+                    hitInfo[i].collider.name, Origin.position, Target.position, direction, hitInfo[i].transform.position);
+                if (Origin.position != hitInfo[i].transform.position)
+                {
+                    return true;
+                }
+            }
+
+            JSIAdvPodsUtil.Log_Debug("No View obstruction");
+            return false;
+        }
+
+        #if LINEDEBUG
+        internal void drawMyLine(Vector3 start, Vector3 end, Color color, float duration = 0.2f)
+        {
+            StartCoroutine(JSIAdvPodsUtil.drawLine(start, end, color, duration));
+        }
+        #endif
 
         public void VoodooRotate()
         {

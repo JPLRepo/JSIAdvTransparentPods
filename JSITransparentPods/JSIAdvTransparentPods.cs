@@ -15,7 +15,7 @@
  * the Free Software Foundation, either version 3 of the License, revision
  * date 29 June 2007, or (at your option) any later version.
  * 
- * RJSIAdvTransparentPods is distributed in the hope that it will be useful, but
+ * JSIAdvTransparentPods is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
@@ -36,7 +36,7 @@ namespace JSIAdvTransparentPods
     public class JSIAdvTransparentPods : MonoBehaviour
     {
         public static JSIAdvTransparentPods Instance;
-        internal List<Part> PartstoFilterfromIVADict;
+        internal static List<Part> PartstoFilterfromIVADict;
         private GameObject baseGO;
         internal Camera IVAcamera;
         internal Transform IVAcameraTransform;
@@ -245,11 +245,11 @@ namespace JSIAdvTransparentPods
                 JSIAdvTransparentPods.Instance.IVAcamera.fieldOfView = JSIAdvTransparentPods.Instance.Maincamera.fieldOfView;
             }
 
-            for (int i = 0; i < JSIAdvTransparentPods.Instance.PartstoFilterfromIVADict.Count; i++)
+            for (int i = 0; i < JSIAdvTransparentPods.PartstoFilterfromIVADict.Count; i++)
             {
                 try
                 {
-                    JSIAdvTransparentPods.Instance.PartstoFilterfromIVADict[i].internalModel.SetVisible(false);
+                    JSIAdvTransparentPods.PartstoFilterfromIVADict[i].internalModel.SetVisible(false);
                 }
                 catch (Exception ex)
                 {
@@ -265,11 +265,11 @@ namespace JSIAdvTransparentPods
         
         public void OnPostRender()
         {
-            for (int i = 0; i < JSIAdvTransparentPods.Instance.PartstoFilterfromIVADict.Count; i++)
+            for (int i = 0; i < JSIAdvTransparentPods.PartstoFilterfromIVADict.Count; i++)
             {
                 try
                 {
-                    JSIAdvTransparentPods.Instance.PartstoFilterfromIVADict[i].internalModel.SetVisible(true);
+                    JSIAdvTransparentPods.PartstoFilterfromIVADict[i].internalModel.SetVisible(true);
                 }
                 catch (Exception)
                 {
