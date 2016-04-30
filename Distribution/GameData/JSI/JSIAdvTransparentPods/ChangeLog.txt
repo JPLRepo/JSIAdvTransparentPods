@@ -1,4 +1,10 @@
-﻿V0.1.3.0 (now released as a seperate mod/repro from Raster Prop Monitor)
+﻿V0.1.4.0
+Added swappable/multiple Depth Mask Shader support. See the WIKI page for details.
+Automatically enable/disable the TransparentPod setting (part right click menu) if the IVA is obstructed by something else in front of it.
+TransparentPod setting in the part right click menu will now display "Obstructed" in this scenario ONLY if it was set to "ON". If it is set to
+"OFF" or "AUTO" it will remain locked in that state whilst obstructed.
+Improved Portrait Camera handling.
+V0.1.3.0 (now released as a seperate mod/repro from Raster Prop Monitor)
 Fixed broken Transparent Shader and Opaque Shader swapping functionality.
 Fixed camera jitters/lag on Transparent IVAs that are not part of the active vessel in flight.
 Fixed Portrait Cameras when EVA from vessel.

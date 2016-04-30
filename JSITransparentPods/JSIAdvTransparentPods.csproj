@@ -86,7 +86,19 @@
     <Content Include="LocalDev\pdb2mdb_exe.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="PostBuildMacros">
+    <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
+      <Output TaskParameter="Assemblies" ItemName="Targets" />
+    </GetAssemblyIdentity>
+    <ItemGroup>
+      <VersionNumber Include="@(Targets->'%(Version)')" />
+    </ItemGroup>
+  </Target>
   <PropertyGroup>
+  <PostBuildEventDependsOn>
+    $(PostBuildEventDependsOn);
+    PostBuildMacros;
+  </PostBuildEventDependsOn>
     <PostBuildEvent>set /p KSP_DIR=&lt;"$(ProjectDir)LocalDev\ksp_dir.txt"
 
 set /p MONO_EXE_DIR=&lt;"$(ProjectDir)LocalDev\mono_exe.txt"
@@ -105,9 +117,9 @@ xcopy "$(TargetDir)$(ProjectName).dll.mdb" "$(ProjectDir)Distribution\GameData\J
 where /q %25ZA_DIR%25:7za.exe
 if %25ERRORLEVEL%25 == 1 (  echo Cannot find 7-zip to package build) else (  echo Packaging build  ) 
 
-if exist "$(SolutionDir)$(ProjectName).zip" del "$(SolutionDir)$(ProjectName).zip"   
-%25ZA_DIR%257za.exe a -tzip "$(SolutionDir)$(ProjectName).zip" "$(ProjectDir)Distribution\GameData" 
-%25ZA_DIR%257za.exe d -r "$(SolutionDir)$(ProjectName).zip" "*.ddsified" "*.pdb" "*.mdb" "*.xcf" "*.blend" "thumbs.db"
+if exist "$(SolutionDir)$(ProjectName)_V@(VersionNumber).zip" del "$(SolutionDir)$(ProjectName)_V@(VersionNumber).zip"   
+%25ZA_DIR%257za.exe a -tzip "$(SolutionDir)$(ProjectName)_V@(VersionNumber).zip" "$(ProjectDir)Distribution\GameData" 
+%25ZA_DIR%257za.exe d -r "$(SolutionDir)$(ProjectName)_V@(VersionNumber).zip" "*.ddsified" "*.pdb" "*.mdb" "*.xcf" "*.blend" "thumbs.db"
 xcopy /E /Y "$(ProjectDir)Distribution\GameData" "%25KSP_DIR%25\GameData"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

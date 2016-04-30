@@ -23,58 +23,82 @@
  * You should have received a copy of the GNU General Public License
  * along with JSIAdvTransparentPods.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
- using System;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Reflection;
+using FinePrint;
+using KSP.UI.Screens.Flight;
+using UnityEngine;
 
 namespace JSIAdvTransparentPods
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using KSP.UI.Screens.Flight;
-    using UnityEngine;
+    
     
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     class Portraits : MonoBehaviour
     {
+
+        internal static BindingFlags eFlags = BindingFlags.Instance | BindingFlags.NonPublic;
+
+        //reflecting protected methods inside a public class. Until KSP 1.1.x can rectify the situation.
+        internal static void UIControlsUpdate()
+        {
+            MethodInfo UIControlsUpdateMethod = typeof(KerbalPortraitGallery).GetMethod("UIControlsUpdate", eFlags);
+            UIControlsUpdateMethod.Invoke(KerbalPortraitGallery.Instance, null);
+        }
+
+        //reflecting protected methods inside a public class. Until KSP 1.1.x can rectify the situation.
+        internal static void DespawnInactivePortraits()
+        {
+            MethodInfo DespawnInactPortMethod = typeof(KerbalPortraitGallery).GetMethod("DespawnInactivePortraits", eFlags);
+            DespawnInactPortMethod.Invoke(KerbalPortraitGallery.Instance, null);
+        }
+
+        //reflecting protected methods inside a public class. Until KSP 1.1.x can rectify the situation.
+        internal static void DespawnPortrait(Kerbal kerbal)
+        {
+            MethodInfo DespawnPortraitMethod = typeof(KerbalPortraitGallery).GetMethod("DespawnPortrait", eFlags, Type.DefaultBinder, new Type[] {typeof(Kerbal)}, null);
+            DespawnPortraitMethod.Invoke(KerbalPortraitGallery.Instance, new object[] {kerbal});
+        }
+
+        internal static bool HasPortrait(Kerbal crew)
+        {
+            return KerbalPortraitGallery.Instance.Portraits.Any(p => p.crewMember == crew);
+        }
+
+        internal static bool InActiveCrew(Kerbal crew)
+        {
+            return KerbalPortraitGallery.Instance.ActiveCrew.Any(p => p == crew);
+        }
+
         /// <summary>
         /// Destroy Portraits for a kerbal and Unregisters them from the KerbalPortraitGallery
         /// </summary>
         /// <param name="kerbal">the Kerbal we want to delete portraits for</param>
         internal static void DestroyPortrait(Kerbal kerbal)
         {
-            //First get a list of ActiveCrew where crewMemberName = our kerbal's crewMemberName
-            //Should be able to do a straight kerbal match here, but for some reason (other stock code?) there are sometimes ghost/phantom
-            // Kerbal entries so they don't match???
-            List<Kerbal> matchingKerbalnames =
-                KerbalPortraitGallery.Instance.ActiveCrew.FindAll(a => a.crewMemberName == kerbal.crewMemberName);
-            // For all the matching ActiveCrew we found cycle through them and de-activate their portrait and UnRegister Them.
-            for (int i = 0; i < matchingKerbalnames.Count; i++)
-            {
-                // set the kerbal InPart to null - this should stop their portrait from re-spawning.
-                kerbal.InPart = null;
-                //Set them visible in portrait to false
-                kerbal.SetVisibleInPortrait(false);
-                kerbal.state = Kerbal.States.NO_SIGNAL;
-                //Unregister our kerbal.
-                KerbalPortraitGallery.Instance.UnregisterActiveCrew(kerbal);
-            }
 
-            //Now for some other reason sometimes we have orphan Portraits, so we search those for any with matching crewMemberName's
-            // and try to Unregister them as well.
-            List<KerbalPortrait> matchingPortraits =
-                KerbalPortraitGallery.Instance.Portraits.FindAll(a => a.crewMemberName == kerbal.crewMemberName);
-            for (int i = 0; i < matchingPortraits.Count; i++)
+            // set the kerbal InPart to null - this should stop their portrait from re-spawning.
+            kerbal.InPart = null;
+            //Set them visible in portrait to false
+            kerbal.SetVisibleInPortrait(false);
+            kerbal.state = Kerbal.States.NO_SIGNAL;
+            //Loop through the ActiveCrew portrait List
+            for (int i = KerbalPortraitGallery.Instance.ActiveCrew.Count - 1; i >= 0; i--)
             {
-                if (matchingPortraits[i].crewMember != null)
+                //If we find an ActiveCrew entry where the crewMemberName is equal to our kerbal's
+                if (KerbalPortraitGallery.Instance.ActiveCrew[i].crewMemberName == kerbal.crewMemberName)
                 {
-                    //Unregister our kerbal.
-                    KerbalPortraitGallery.Instance.UnregisterActiveCrew(matchingPortraits[i].crewMember);
+                    //we Remove them from the list.
+                    KerbalPortraitGallery.Instance.ActiveCrew.RemoveAt(i);
                 }
             }
+            //Portraits List clean-up.
+            DespawnInactivePortraits(); //Despawn any portraits where CrewMember == null
+            DespawnPortrait(kerbal); //Despawn our Kerbal's portrait
+            UIControlsUpdate(); //Update UI controls
         }
 
         /// <summary>
@@ -84,22 +108,17 @@ namespace JSIAdvTransparentPods
         /// <param name="part">the part the kerbal is in</param>
         internal static void RestorePortrait(Part part, Kerbal kerbal)
         {
-            
-            //See if there isn't already a portrait for our kerbal. If there is no match register our kerbal.
-            Kerbal kerbalMatch = KerbalPortraitGallery.Instance.ActiveCrew.FirstOrDefault(a => a == kerbal);
-            KerbalPortrait portraitMatch = KerbalPortraitGallery.Instance.Portraits.FirstOrDefault(a => a == a.crewMember);
-            
             //We don't process DEAD, Unowned kerbals - Compatibility with DeepFreeze Mod.
             if (kerbal.rosterStatus != ProtoCrewMember.RosterStatus.Dead &&
                 kerbal.protoCrewMember.type != ProtoCrewMember.KerbalType.Unowned)
             {
-                //Set the Kerbals InPart back to their original InPart that the PortraitTracker class should have tracked and kept for us.
+                //Set the Kerbals InPart back to their part.
                 kerbal.InPart = part;
-                //Restore the kerbal's portrait, set their portrait state to ALIVE, set them visibile in portraits, call Kerbal.Start which
-                //seems to initialise and do what we want.
+                //Set their portrait state to ALIVE and set their portrait back to visible.
                 kerbal.state = Kerbal.States.ALIVE;
                 kerbal.SetVisibleInPortrait(true);
-                if (kerbalMatch == null && portraitMatch == null)
+                //If they aren't in ActiveCrew and don't have a Portrait them via the kerbal.Start method.
+                if (!InActiveCrew(kerbal) && !HasPortrait(kerbal))
                 {
                     kerbal.staticOverlayDuration = 1f;
                     kerbal.randomizeOnStartup = false;
