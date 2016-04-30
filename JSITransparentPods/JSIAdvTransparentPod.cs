@@ -52,6 +52,12 @@ namespace JSIAdvTransparentPods
         [KSPField]
         public float distanceToCameraThreshold = 50f;
 
+        [KSPField]
+        public string transparentPodDepthMaskShaderTransform = "";
+
+        [KSPField]
+        public string stockOverlayDepthMaskShaderTransform = "";
+
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "TransparentPod")] //ON = transparentpod on, OFF = transparentpod off, AUTO = on when focused.
         public string transparentPodSetting = "ON";
 
@@ -85,6 +91,10 @@ namespace JSIAdvTransparentPods
         private int frameCounter = 0;
         private Quaternion MagicalVoodooRotation = new Quaternion(0, 0.7f, -0.7f, 0);  //We still need this for Editor Mode?
         public bool isIVAobstructed = false;
+        [KSPField(isPersistant = true)]
+        private string prevtransparentPodSetting = "ON";
+        [KSPField(isPersistant = true)]
+        private bool previsIVAobstructed = false;
 
 
         public override string GetInfo()
@@ -222,7 +232,7 @@ namespace JSIAdvTransparentPods
                     part.internalModel.transform.localRotation = MagicalVoodooRotation;
                     //Find all Renderer's with DepthMask shader assigned to them and make them inactive as they cause Z-Fighting in the Editor and are
                     //not needed in the editor - OLD Method.
-                    EditorSetDepthMaskOff();
+                    SetDepthMask();
                 }
                 else
                 {
@@ -266,24 +276,61 @@ namespace JSIAdvTransparentPods
             }
         }
 
-        private void EditorSetDepthMaskOff()
+        private void SetDepthMask(bool enabled = false, string MeshParent = "")
         {
-            //For some reason we need to keep turning off the Renderers with the DepthMask Shader.. 
-            if (part.internalModel != null)
+            
+             if (part.internalModel != null)
             {
-                MeshRenderer[] meshRenderers = base.GetComponentsInChildren<MeshRenderer>();
+                // Look for the transform where it's name matches the passed in string
+                Transform meshBase = null;
+                if (MeshParent != "")
+                {
+                    meshBase = part.internalModel.gameObject.GetComponentsInChildren<Transform>().FirstOrDefault(t => t.name == MeshParent);
+                }
+                //First process meshRenderers
+                MeshRenderer[] meshRenderers;
+                if (MeshParent == "") //If no input string get all MeshRenderers
+                    meshRenderers = base.GetComponentsInChildren<MeshRenderer>();
+                else
+                {
+                    if (meshBase != null) //If we found the transform get all the MeshRenderers that are children of that transform.
+                    {
+                        meshRenderers = meshBase.GetComponentsInChildren<MeshRenderer>();
+                    }
+                    else  //If we didn't find the transform just revert back to getting ALL of the MeshRenderers
+                    {
+                        meshRenderers = base.GetComponentsInChildren<MeshRenderer>();
+                    }
+                }
+                //Now go through and turn off any MeshRenderers that have DepthMaskShader
                 for (int i = 0; i < meshRenderers.Length; i++)
                 {
                     MeshRenderer meshRenderer = meshRenderers[i];
                     if (meshRenderer.material.shader == DepthMaskShader)
-                        meshRenderer.enabled = false;
+                        meshRenderer.enabled = enabled;
                 }
-                SkinnedMeshRenderer[] skinnedMeshRenderers = base.GetComponentsInChildren<SkinnedMeshRenderer>();
+
+                //Now we do the same but for skinnedMeshRenderers
+                SkinnedMeshRenderer[] skinnedMeshRenderers;
+                if (MeshParent == "") //If no input string get all MeshRenderers
+                    skinnedMeshRenderers = base.GetComponentsInChildren<SkinnedMeshRenderer>();
+                else
+                {
+                    if (meshBase != null) //If we found the transform get all the MeshRenderers that are children of that transform.
+                    {
+                        skinnedMeshRenderers = meshBase.GetComponentsInChildren<SkinnedMeshRenderer>();
+                    }
+                    else  //If we didn't find the transform just revert back to getting ALL of the MeshRenderers
+                    {
+                        skinnedMeshRenderers = base.GetComponentsInChildren<SkinnedMeshRenderer>();
+                    }
+                }
+                //Now go through and turn off any MeshRenderers that have DepthMaskShader
                 for (int j = 0; j < skinnedMeshRenderers.Length; j++)
                 {
                     SkinnedMeshRenderer skinnedMeshRenderer = skinnedMeshRenderers[j];
                     if (skinnedMeshRenderer.material.shader == DepthMaskShader)
-                        skinnedMeshRenderer.enabled = false;
+                        skinnedMeshRenderer.enabled = enabled;
                 }
             }
         }
@@ -297,6 +344,18 @@ namespace JSIAdvTransparentPods
 
             if (HighLogic.LoadedSceneIsFlight)
             {
+                //Process Multiple Depth Mask Shaders
+                if (transparentPodDepthMaskShaderTransform != "")
+                {
+                    SetDepthMask(!JSIAdvTransparentPods.Instance.StockOverlayCamIsOn,
+                        transparentPodDepthMaskShaderTransform);
+                }
+                if (stockOverlayDepthMaskShaderTransform != "")
+                {
+                    SetDepthMask(JSIAdvTransparentPods.Instance.StockOverlayCamIsOn,
+                        stockOverlayDepthMaskShaderTransform);
+                }
+
                 ProcessPortraits(vessel);
             }
         }
@@ -409,7 +468,7 @@ namespace JSIAdvTransparentPods
                 }
 
                 //Turn the DepthMasks off in the Editor or we get Z-Fighting.
-                EditorSetDepthMaskOff();
+                SetDepthMask();
             }
         }
 
@@ -420,11 +479,19 @@ namespace JSIAdvTransparentPods
             if (HighLogic.LoadedSceneIsFlight)
             {
                 //Now FlightScene Processing
-                isIVAobstructed = false;
+                
+                //IVA OBstruction process of the transparentPodSetting field
+                //If previously IVA was obstructed and now it is not reset the transparentPodSetting back to it's previous value.
+                if (previsIVAobstructed && !isIVAobstructed)
+                {
+                    transparentPodSetting = prevtransparentPodSetting;
+                    Events["eventToggleTransparency"].active = true;
+                }
+                previsIVAobstructed = isIVAobstructed;
+                //isIVAobstructed = false;
 
                 // If the root part changed, or the IVA is mysteriously missing, we reset it and take note of where it ended up.
-                if (vessel.rootPart != knownRootPart || lastActiveVessel != FlightGlobals.ActiveVessel ||
-                    part.internalModel == null)
+                if (vessel.rootPart != knownRootPart || lastActiveVessel != FlightGlobals.ActiveVessel || part.internalModel == null)
                 {
                     ResetIVA();
                 }
@@ -434,7 +501,7 @@ namespace JSIAdvTransparentPods
                 {
                     // If transparentPodSetting = OFF or AUTO and not the focused active part we treat the part like a non-transparent part.
                     // and we turn off the shaders (if set) and the internal to the filter list and exit OnUpdate. 
-                    if (transparentPodSetting == "OFF" || (transparentPodSetting == "AUTO" && !mouseOver))
+                    if (transparentPodSetting == "OFF" || (transparentPodSetting == "AUTO" && !mouseOver) && !isIVAobstructed)
                     {
                         SetShaders(false);
                         if (!JSIAdvTransparentPods.PartstoFilterfromIVADict.Contains(part))
@@ -509,6 +576,13 @@ namespace JSIAdvTransparentPods
                                         JSIAdvTransparentPods.PartstoFilterfromIVADict.Add(part);
                                     SetShaders(false);
                                     setVisible = false;
+                                    //Set the prevtransparentPodSetting to the current transparentPodSetting and then set transparenPodSetting to "OFF"
+                                    if (!previsIVAobstructed)
+                                    {
+                                        Events["eventToggleTransparency"].active = false;
+                                        prevtransparentPodSetting = transparentPodSetting;
+                                        transparentPodSetting = "Obstructed";
+                                    }
                                     return;
                                 }
                             }
