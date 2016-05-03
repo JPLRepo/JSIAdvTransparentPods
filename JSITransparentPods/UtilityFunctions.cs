@@ -28,6 +28,8 @@ using System.Collections;
 using UnityEngine;
 using System.Linq;
 using System.Reflection;
+using System.Collections.Generic;
+using System.Text;
 
 namespace JSIAdvTransparentPods
 {
@@ -48,6 +50,56 @@ namespace JSIAdvTransparentPods
             Debug.Log("--------------------------------------");
         }
         
+        internal static void DumpGameObjectChilds(GameObject go, string pre, StringBuilder sb)
+        {
+            bool first = pre == "";
+            List<GameObject> neededChilds = new List<GameObject>();
+            int count = go.transform.childCount;
+            for (int i = 0; i < count; i++)
+            {
+                GameObject child = go.transform.GetChild(i).gameObject;
+                if (!child.GetComponent<Part>() && child.name != "main camera pivot")
+                    neededChilds.Add(child);
+            }
+
+            count = neededChilds.Count;
+
+            sb.Append(pre);
+            if (!first)
+            {
+                sb.Append(count > 0 ? "--+" : "---");
+            }
+            else
+            {
+                sb.Append("+");
+            }
+            sb.AppendFormat("{0} T:{1} L:{2} ({3})\n", go.name, go.tag, go.layer, LayerMask.LayerToName(go.layer));
+
+            string front = first ? "" : "  ";
+            string preComp = pre + front + (count > 0 ? "| " : "  ");
+
+            Component[] comp = go.GetComponents<Component>();
+
+            for (int i = 0; i < comp.Length; i++)
+            {
+                if (comp[i] is Transform)
+                {
+                    sb.AppendFormat("{0}  {1} - {2}\n", preComp, comp[i].GetType().Name, go.transform.name);
+                }
+                else
+                {
+                    sb.AppendFormat("{0}  {1} - {2}\n", preComp, comp[i].GetType().Name, comp[i].name);
+                }
+            }
+
+            sb.AppendLine(preComp);
+
+            for (int i = 0; i < count; i++)
+            {
+                DumpGameObjectChilds(neededChilds[i], i == count - 1 ? pre + front + " " : pre + front + "|", sb);
+            }
+        }
+
         public static void SetCameraCullingMaskForIVA(string cameraName, bool flag)
         {
             Camera thatCamera = GetCameraByName(cameraName);

@@ -26,7 +26,8 @@
 using System;
 using System.Collections.Generic;
  using System.Linq;
- using KSP.UI.Screens;
+using System.Text;
+using KSP.UI.Screens;
  using KSP.UI.Screens.Flight;
 using UnityEngine;
 
@@ -57,6 +58,9 @@ namespace JSIAdvTransparentPods
 
         [KSPField]
         public string stockOverlayDepthMaskShaderTransform = "";
+
+        [KSPField]
+        public bool combineDepthMaskShaders = false;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "TransparentPod")] //ON = transparentpod on, OFF = transparentpod off, AUTO = on when focused.
         public string transparentPodSetting = "ON";
@@ -129,7 +133,7 @@ namespace JSIAdvTransparentPods
                     hasOpaqueShader = true;
                 }
             }
-
+            
             // In Editor, the camera we want to change is called "Main Camera". In flight, the camera to change is
             // "Camera 00", i.e. close range camera.
 
@@ -221,6 +225,37 @@ namespace JSIAdvTransparentPods
                 }
             }
 
+            //If debugging is ON dump the InternalModel transforms.
+            if (JSIAdvPodsUtil.debugLoggingEnabled && part.internalModel != null)
+            {
+                StringBuilder sb = new StringBuilder();
+                JSIAdvPodsUtil.DumpGameObjectChilds(part.internalModel.gameObject.transform.parent.gameObject, part.name + " Internal ", sb);
+                MonoBehaviour.print("[JSIATP] " + sb);
+            }
+
+            //Check and process transparentPodDepthMaskShaderTransform field.
+            if (!string.IsNullOrEmpty(transparentPodDepthMaskShaderTransform) && part.internalModel != null)
+            {
+                Transform meshBase = part.internalModel.gameObject.GetComponentsInChildren<Transform>().FirstOrDefault(t => t.name == transparentPodDepthMaskShaderTransform);
+                if (meshBase == null)
+                {
+                    transparentPodDepthMaskShaderTransform = "";
+                    JSIAdvPodsUtil.Log("Unable to find transparentPodDepthMaskShaderTransform {0} in InternalModel", transparentPodDepthMaskShaderTransform);
+                }
+                    
+            }
+
+            //Check and process stockOverlayDepthMaskShaderTransform field.
+            if (!string.IsNullOrEmpty(stockOverlayDepthMaskShaderTransform) && part.internalModel != null)
+            {
+                Transform meshBase = part.internalModel.gameObject.GetComponentsInChildren<Transform>().FirstOrDefault(t => t.name == stockOverlayDepthMaskShaderTransform);
+                if (meshBase == null)
+                {
+                    transparentPodDepthMaskShaderTransform = "";
+                    JSIAdvPodsUtil.Log("Unable to find stockOverlayDepthMaskShaderTransform {0} in InternalModel", stockOverlayDepthMaskShaderTransform);
+
+                }
+            }
 
             // If we ended up with an existing internal model, 
             if (part.internalModel != null)
@@ -345,17 +380,53 @@ namespace JSIAdvTransparentPods
             if (HighLogic.LoadedSceneIsFlight)
             {
                 //Process Multiple Depth Mask Shaders
-                if (transparentPodDepthMaskShaderTransform != "")
+                //If they are not defined then by default any baked in depth mask shader will be ON in flight.
+                //If there is no baked in depth mask shader that doesn't matter either, that means the WHOLE IVA will be visible.
+                //If stock is OFF
+                if (!JSIAdvTransparentPods.Instance.StockOverlayCamIsOn)
                 {
-                    SetDepthMask(!JSIAdvTransparentPods.Instance.StockOverlayCamIsOn,
-                        transparentPodDepthMaskShaderTransform);
+                    //If combine masks is false then if we have a stock overlay turn it off
+                    // and if we have a transparentPod overlay turn it on.
+                    if (!combineDepthMaskShaders)
+                    {
+                        if (stockOverlayDepthMaskShaderTransform != "")
+                        {
+                            SetDepthMask(false, stockOverlayDepthMaskShaderTransform);
+                        }
+                        if (transparentPodDepthMaskShaderTransform != "")
+                        {
+                            SetDepthMask(true, transparentPodDepthMaskShaderTransform);
+                        }
+                    }
+                    //If combine masks is true we turn both on if defined to create a combined overlay
+                    //for transparent pod mode.
+                    else
+                    {
+                        if (stockOverlayDepthMaskShaderTransform != "")
+                        {
+                            SetDepthMask(true, stockOverlayDepthMaskShaderTransform);
+                        }
+                        if (transparentPodDepthMaskShaderTransform != "")
+                        {
+                            SetDepthMask(true, transparentPodDepthMaskShaderTransform);
+                        }
+                    }
                 }
-                if (stockOverlayDepthMaskShaderTransform != "")
+                //If stock is ON
+                else
                 {
-                    SetDepthMask(JSIAdvTransparentPods.Instance.StockOverlayCamIsOn,
-                        stockOverlayDepthMaskShaderTransform);
+                    //Regardless of combine mask setting, then if we have a stock overlay turn it on
+                    // and if we have a transparentPod overlay turn it off.
+                    if (stockOverlayDepthMaskShaderTransform != "")
+                    {
+                        SetDepthMask(true, stockOverlayDepthMaskShaderTransform);
+                    }
+                    if (transparentPodDepthMaskShaderTransform != "")
+                    {
+                        SetDepthMask(false, transparentPodDepthMaskShaderTransform);
+                    }
                 }
-
+                
                 ProcessPortraits(vessel);
             }
         }
@@ -390,7 +461,13 @@ namespace JSIAdvTransparentPods
                     // If the internal model doesn't yet exist, this call will implicitly create it anyway.
                     // It will also initialise it, which in this case implies moving it into the correct location in internal space
                     // and populate it with crew, which is what we want.
-                    part.SpawnIVA();
+                    if (part.CrewCapacity > 0)
+                        part.SpawnIVA();
+                    else
+                    {
+                        part.CreateInternalModel();
+                        part.internalModel.Initialize(part);
+                    }
                     part.internalModel.SetVisible(true);
                     setVisible = true;
                     // And then we remember the root part and the active vessel these coordinates refer to.
