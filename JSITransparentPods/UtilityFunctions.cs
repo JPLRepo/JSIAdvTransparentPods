@@ -45,7 +45,39 @@ namespace JSIAdvTransparentPods
             Debug.Log("--------- Dump Unity Cameras ------------");
             foreach (Camera c in Camera.allCameras)
             {
-                Debug.Log("Camera " + c.name + " cullingmask " + c.cullingMask + " depth " + c.depth + " farClipPlane " + c.farClipPlane + " nearClipPlane " + c.nearClipPlane);
+                string layernames = "";
+                int val = c.cullingMask;
+                var arr = new BitArray(BitConverter.GetBytes(val));
+                for (int i = 0; i < arr.Length; i++)
+                {
+                    if (arr[i]) //True = 1
+                    {
+                        layernames += LayerMask.LayerToName(i) + ",";
+                    }
+                }
+                Debug.Log("Camera " + c.name + " cullingmask " + c.cullingMask + " depth " + c.depth + " farClipPlane " + c.farClipPlane + " nearClipPlane " + c.nearClipPlane + "Layernames: " + layernames);
+                Debug.Log("--- Transform Pos " + c.transform.position + " Transform Rot " + c.transform.rotation + " Transform LocalPos " + c.transform.localPosition + " Transform LocalRot " + c.transform.localRotation);
+                Debug.Log("--- Parent " + c.transform.parent.name);
+            }
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                if (EditorCamera.Instance.cam != null)
+                {
+                    Camera c = EditorCamera.Instance.cam;
+                    string layernames = "";
+                    int val = c.cullingMask;
+                    var arr = new BitArray(BitConverter.GetBytes(val));
+                    for (int i = 0; i < arr.Length; i++)
+                    {
+                        if (arr[i]) //True = 1
+                        {
+                            layernames += LayerMask.LayerToName(i) + ",";
+                        }
+                    }
+                    Debug.Log("Camera " + c.name + " cullingmask " + c.cullingMask + " depth " + c.depth + " farClipPlane " + c.farClipPlane + " nearClipPlane " + c.nearClipPlane + "Layernames: " + layernames);
+                    Debug.Log("--- Transform Pos " + c.transform.position + " Transform Rot " + c.transform.rotation + " Transform LocalPos " + c.transform.localPosition + " Transform LocalRot " + c.transform.localRotation);
+                    Debug.Log("--- Parent " + c.transform.parent.name);
+                }
             }
             Debug.Log("--------------------------------------");
         }
@@ -161,7 +193,17 @@ namespace JSIAdvTransparentPods
             }
             return null;
         }
-        
+
+        public static bool StockOverlayCamIsOn
+        {
+            get
+            {
+                Camera StockOverlayCamera = JSIAdvPodsUtil.GetCameraByName("InternalSpaceOverlay Host");
+                if (StockOverlayCamera != null) return true;
+                else return false;
+            }
+        }
+
         public static bool VesselIsInIVA(Vessel thatVessel)
         {
             // Inactive IVAs are renderer.enabled = false, this can and should be used...

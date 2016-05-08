@@ -32,7 +32,7 @@ using System.Linq;
 
 namespace JSIAdvTransparentPods
 {
-    [KSPAddon(KSPAddon.Startup.Flight, false)]
+    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     public class JSIAdvTransparentPods : MonoBehaviour
     {
         public static JSIAdvTransparentPods Instance;
@@ -49,33 +49,21 @@ namespace JSIAdvTransparentPods
         public void Awake()
         {
             JSIAdvPodsUtil.Log_Debug("OnAwake in {0}", HighLogic.LoadedScene);
-            if (Instance != null) Destroy(this);
+            if (Instance != null)
+            {
+                JSIAdvPodsUtil.Log_Debug("Instance already exists, so destroying this one");
+                Destroy(this);
+            }
+            if (!HighLogic.LoadedSceneIsFlight)
+            {
+                JSIAdvPodsUtil.Log_Debug("Not in Flight, so destroying this instance");
+                Destroy(this);
+            }
             //DontDestroyOnLoad(this);
             Instance = this;
             GameEvents.OnMapEntered.Add(TurnoffIVACamera);
             GameEvents.OnMapExited.Add(TurnonIVACamera);
-            GameEvents.onVesselChange.Add(onVesselChange);
-            GameEvents.onVesselSwitching.Add(onVesselSwitching);
             PartstoFilterfromIVADict = new List<Part>();
-        }
-
-        public void onLevelWasLoaded(GameScenes scene)
-        {
-            JSIAdvPodsUtil.Log_Debug("OnLevelWasLoaded {0}", scene);
-        }
-
-        public void onVesselChange(Vessel vessel)
-        {
-            JSIAdvPodsUtil.Log_Debug("OnVesselChange {0} ({1})" , vessel.vesselName , vessel.id);
-        }
-        
-        public void onVesselSwitching(Vessel oldvessel, Vessel newvessel)
-        {
-            JSIAdvPodsUtil.Log_Debug("OnVesselSwitching");
-            if (oldvessel != null)
-                JSIAdvPodsUtil.Log_Debug("From: {0} ({1})" , oldvessel.vesselName , oldvessel.id);
-            if (newvessel != null)
-                JSIAdvPodsUtil.Log_Debug("To: {0} ({1}) " , newvessel.vesselName , newvessel.id);
         }
         
         public void Update()
@@ -84,7 +72,8 @@ namespace JSIAdvTransparentPods
                 return;
 
             //If Stock Overlay Cam is On or we are NOT in Flight camera mode (IE. Map or IVA mode), turn OFF our camera.
-            if (StockOverlayCamIsOn || CameraManager.Instance.currentCameraMode != CameraManager.CameraMode.Flight)
+            if (JSIAdvPodsUtil.StockOverlayCamIsOn || 
+                (HighLogic.LoadedSceneIsFlight && CameraManager.Instance.currentCameraMode != CameraManager.CameraMode.Flight))
             {
                 TurnoffIVACamera();
                 return;
@@ -103,7 +92,7 @@ namespace JSIAdvTransparentPods
                 return;
             
             //If the Stock Overlay camera is not on or we are in flight cam mode.
-            if (!StockOverlayCamIsOn && CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Flight)
+            if (!JSIAdvPodsUtil.StockOverlayCamIsOn && CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Flight)
             {
                 //This is a bit of a performance hit, we are checking ALL loaded vessels to filter out NON JSIAdvTransparentPods.
                 //PartstoFilterFromIVADict will contain all loaded vessels that are not JSIAdvTransparentPods, as well as any that are but are too far from the 
@@ -119,16 +108,8 @@ namespace JSIAdvTransparentPods
                         }
                     }
                 }
-
-                //If the IVA and Main camera transforms are not null (should't be) position and rotate the IVACamera correctly.
-                //if (IVAcameraTransform != null && MaincameraTransform != null && InternalSpace.Instance != null)
-                //{
-                //    IVAcameraTransform.position = InternalSpace.WorldToInternal(MaincameraTransform.position);
-                //    IVAcameraTransform.rotation = InternalSpace.WorldToInternal(MaincameraTransform.rotation);
-                //    IVAcamera.fieldOfView = Maincamera.fieldOfView;
-                //}
             }
-            
+
         }
 
         public void OnDestroy()
@@ -137,19 +118,6 @@ namespace JSIAdvTransparentPods
             DestroyIVACamera();
             GameEvents.OnMapEntered.Remove(TurnoffIVACamera);
             GameEvents.OnMapExited.Remove(TurnonIVACamera);
-            GameEvents.onVesselChange.Remove(onVesselChange);
-            GameEvents.onLevelWasLoaded.Remove(onLevelWasLoaded);
-            GameEvents.onVesselSwitching.Remove(onVesselSwitching);
-        }
-
-        public bool StockOverlayCamIsOn
-        {
-            get
-            {
-                Camera StockOverlayCamera = JSIAdvPodsUtil.GetCameraByName("InternalSpaceOverlay Host");
-                if (StockOverlayCamera != null) return true;
-                else return false;
-            }
         }
 
         internal void CreateIVACamera()
@@ -165,11 +133,25 @@ namespace JSIAdvTransparentPods
                 IVAcamera = baseGO.gameObject.AddComponent<Camera>();
                 IVAcamera.clearFlags = CameraClearFlags.Depth;
                 IVAcameraTransform = IVAcamera.transform;
-                //Get the Main Flight camera.
-                Maincamera = FlightCamera.fetch.mainCamera;
-                //The IVA cmaera Transform needs to be parented to the InternalSpace Transform.
-                IVAcameraTransform.parent = InternalSpace.Instance.transform;
-                MaincameraTransform = Maincamera.transform;
+                if (HighLogic.LoadedSceneIsFlight)
+                {
+                    //Get the Main Flight camera.
+                    Maincamera = FlightCamera.fetch.mainCamera;
+                    //The IVA camera Transform needs to be parented to the InternalSpace Transform.
+                    IVAcameraTransform.parent = InternalSpace.Instance.transform;
+                    MaincameraTransform = Maincamera.transform;
+                }
+                else //Editor
+                {
+                    //Get the Main Flight camera.
+                    //Maincamera = EditorCamera.Instance.cam;
+                    Maincamera = JSIAdvPodsUtil.GetCameraByName("Main Camera");
+                    //The IVA camera Transform needs to be parented to the Main Camera Transform.
+                    //IVAcameraTransform.parent = EditorCamera.Instance.transform;
+                    IVAcameraTransform.parent = Maincamera.transform;
+                    MaincameraTransform = Maincamera.transform;
+                }
+                
                 //Depth of 3 is above the Main Cameras.
                 IVAcamera.depth = 3f;
                 IVAcamera.fieldOfView = Maincamera.fieldOfView;
@@ -238,12 +220,34 @@ namespace JSIAdvTransparentPods
         public void OnPreCull()
         {
             //If the IVA and Main camera transforms are not null (should't be) position and rotate the IVACamera correctly.
-            if (JSIAdvTransparentPods.Instance.IVAcameraTransform != null && JSIAdvTransparentPods.Instance.MaincameraTransform != null && InternalSpace.Instance != null)
+            if (HighLogic.LoadedSceneIsFlight)
             {
-                JSIAdvTransparentPods.Instance.IVAcameraTransform.position = InternalSpace.WorldToInternal(JSIAdvTransparentPods.Instance.MaincameraTransform.position);
-                JSIAdvTransparentPods.Instance.IVAcameraTransform.rotation = InternalSpace.WorldToInternal(JSIAdvTransparentPods.Instance.MaincameraTransform.rotation);
-                JSIAdvTransparentPods.Instance.IVAcamera.fieldOfView = JSIAdvTransparentPods.Instance.Maincamera.fieldOfView;
+                if (JSIAdvTransparentPods.Instance.IVAcameraTransform != null &&
+                  JSIAdvTransparentPods.Instance.MaincameraTransform != null && InternalSpace.Instance != null)
+                {
+                    JSIAdvTransparentPods.Instance.IVAcameraTransform.position =
+                        InternalSpace.WorldToInternal(JSIAdvTransparentPods.Instance.MaincameraTransform.position);
+                    JSIAdvTransparentPods.Instance.IVAcameraTransform.rotation =
+                        InternalSpace.WorldToInternal(JSIAdvTransparentPods.Instance.MaincameraTransform.rotation);
+                    JSIAdvTransparentPods.Instance.IVAcamera.fieldOfView =
+                        JSIAdvTransparentPods.Instance.Maincamera.fieldOfView;
+                }
             }
+            else
+            {
+                if (JSIAdvTransparentPods.Instance.IVAcameraTransform != null &&
+                  JSIAdvTransparentPods.Instance.MaincameraTransform != null && EditorCamera.Instance != null)
+                {
+                    JSIAdvTransparentPods.Instance.IVAcameraTransform.position =
+                        JSIAdvTransparentPods.Instance.MaincameraTransform.position;
+                    JSIAdvTransparentPods.Instance.IVAcameraTransform.rotation =
+                        JSIAdvTransparentPods.Instance.MaincameraTransform.rotation;
+                    JSIAdvTransparentPods.Instance.IVAcamera.fieldOfView =
+                        JSIAdvTransparentPods.Instance.Maincamera.fieldOfView;
+                    //JSIAdvPodsUtil.DumpCameras();
+                }
+            }
+            
 
             for (int i = 0; i < JSIAdvTransparentPods.PartstoFilterfromIVADict.Count; i++)
             {
