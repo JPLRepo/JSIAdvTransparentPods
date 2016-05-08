@@ -1,4 +1,14 @@
-﻿V0.1.4.0
+﻿V0.1.5.0
+Fixed issue with Transparent shaders support for transparent Windows. 
+Added check to part startup for fields stockOverlayDepthMaskShaderTransform & transparentPodDepthMaskShaderTransform if they cannot be found
+then processing is sped up (effiency change).
+Added support for Internal Models defined to parts that have NO crew capacity at all. (Stock does not spawn or support internal models for parts that have no crew capacity defined, but that doesn't mean we can't do it, this mod now supports it).
+Added bool field combineDepthMaskShaders. If this is set to True (Default is false) then the transparentPodDepthMaskShaderTransform is treated as an ADD_ON to
+the stockOverlayDepthMaskShaderTransform mesh. and BOTH will be turned on in JSIATP mode and the transparentPodDepthMaskShaderTransform will be
+turned off and the stockOverlayDepthMaskShaderTransform will be turned ON when in Stock overlay mode. This is to support different model
+configurations depending on what the modeller/modder requires. See WIKI for more details (added pictures to the WIKI as well).
+WIKI updated with more details and examples.
+V0.1.4.0
 Added swappable/multiple Depth Mask Shader support. See the WIKI page for details.
 Automatically enable/disable the TransparentPod setting (part right click menu) if the IVA is obstructed by something else in front of it.
 TransparentPod setting in the part right click menu will now display "Obstructed" in this scenario ONLY if it was set to "ON". If it is set to

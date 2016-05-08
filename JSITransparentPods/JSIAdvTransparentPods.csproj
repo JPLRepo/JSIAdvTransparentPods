@@ -65,6 +65,7 @@
     <None Include="Panels\PanelFocuser.cs" />
     <None Include="Panels\PanelResizer.cs" />
     <Compile Include="JSIPortraits.cs" />
+    <Compile Include="JSIZfighter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings.cs" />
     <None Include="Panels\UIWindowHelper.cs" />
@@ -95,7 +96,7 @@
     </ItemGroup>
   </Target>
   <PropertyGroup>
-  <PostBuildEventDependsOn>
+    <PostBuildEventDependsOn>
     $(PostBuildEventDependsOn);
     PostBuildMacros;
   </PostBuildEventDependsOn>
