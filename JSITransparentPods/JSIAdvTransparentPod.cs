@@ -220,7 +220,7 @@ namespace JSIAdvTransparentPods
                                 // We both change the shader and backup the original shader so we can undo it later.
                                 Shader backupShader = itr.GetComponent<Renderer>().material.shader;
                                 itr.GetComponent<Renderer>().material.shader = transparentShader;
-                                shadersBackup.Add(new KeyValuePair<Transform, Shader>(tr, backupShader));
+                                shadersBackup.Add(new KeyValuePair<Transform, Shader>(itr, backupShader));
                             }
                         }
                     }
@@ -452,7 +452,7 @@ namespace JSIAdvTransparentPods
         {
             try
             {
-                if (HighLogic.LoadedSceneIsFlight)
+                if (HighLogic.LoadedSceneIsFlight || HighLogic.LoadedSceneIsEditor)
                 {
                     JSIAdvPodsUtil.Log_Debug("Need to reset IVA in part {0}({1})", part.name, part.craftID);
 

@@ -63,6 +63,7 @@ namespace JSIAdvTransparentPods
             Instance = this;
             GameEvents.OnMapEntered.Add(TurnoffIVACamera);
             GameEvents.OnMapExited.Add(TurnonIVACamera);
+            
             PartstoFilterfromIVADict = new List<Part>();
         }
         

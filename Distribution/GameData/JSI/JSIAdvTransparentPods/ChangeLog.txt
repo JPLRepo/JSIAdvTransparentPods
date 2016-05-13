@@ -1,4 +1,6 @@
-﻿V0.1.5.0
+﻿V0.1.6.0
+Fixed bug in TransparentTransforms processing for window shader swapping.
+V0.1.5.0
 Fixed issue with Transparent shaders support for transparent Windows. 
 Added check to part startup for fields stockOverlayDepthMaskShaderTransform & transparentPodDepthMaskShaderTransform if they cannot be found
 then processing is sped up (effiency change).
