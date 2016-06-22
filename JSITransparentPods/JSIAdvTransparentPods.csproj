@@ -31,16 +31,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\KSPDLLs\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\KSPDLLs - 1.1.3\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>..\..\KSPDLLs\Assembly-CSharp-firstpass.dll</HintPath>
-    </Reference>
-    <Reference Include="Assembly-UnityScript">
-      <HintPath>..\..\KSPDLLs\Assembly-UnityScript.dll</HintPath>
+      <HintPath>..\..\KSPDLLs - 1.1.3\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
     <Reference Include="KSPUtil">
-      <HintPath>..\..\KSPDLLs\KSPUtil.dll</HintPath>
+      <HintPath>..\..\KSPDLLs - 1.1.3\KSPUtil.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -49,18 +46,18 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
-      <HintPath>..\..\KSPDLLs\UnityEngine.dll</HintPath>
+      <HintPath>..\..\KSPDLLs - 1.1.3\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\KSPDLLs\UnityEngine.UI.dll</HintPath>
+      <HintPath>..\..\KSPDLLs - 1.1.3\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="JSIAdvTransparentPod.cs" />
     <Compile Include="JSIAdvTransparentPods.cs" />
-    <None Include="Distribution\GameData\JSI\JSIAdvTransparentPods\DisableTransparencyInEditor.cfg.noload" />
-    <None Include="Distribution\GameData\JSI\JSIAdvTransparentPods\JSIAdvTransparentPods.version" />
-    <None Include="Distribution\GameData\JSI\JSIAdvTransparentPods\Plugins\Config.cfg" />
+    <None Include="..\Distribution\GameData\JSI\JSIAdvTransparentPods\JSIAdvTransparentPods.version">
+      <Link>JSIAdvTransparentPods.version</Link>
+    </None>
     <None Include="Panels\PanelDragger.cs" />
     <None Include="Panels\PanelFocuser.cs" />
     <None Include="Panels\PanelResizer.cs" />
@@ -72,15 +69,9 @@
     <Compile Include="UtilityFunctions.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Distribution\GameData\JSI\JSIAdvTransparentPods\ChangeLog.txt" />
-    <Content Include="Distribution\GameData\JSI\JSIAdvTransparentPods\MiniAVC Licence.txt" />
-    <Content Include="Distribution\GameData\JSI\JSIAdvTransparentPods\MiniAVC.dll" />
-    <Content Include="Distribution\GameData\JSI\JSIAdvTransparentPods\MiniAVC.xml" />
-    <Content Include="Distribution\GameData\JSI\JSIAdvTransparentPods\Plugins\JSIAdvTransparentPods.dll" />
-    <Content Include="Distribution\GameData\JSI\JSIAdvTransparentPods\Plugins\JSIAdvTransparentPods.dll.mdb">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <Content Include="..\Distribution\GameData\JSI\JSIAdvTransparentPods\ChangeLog.txt">
+      <Link>ChangeLog.txt</Link>
     </Content>
-    <Content Include="Distribution\GameData\JSI\JSIAdvTransparentPods\Plugins\JSIAdvTransparentPods.pdb" />
     <Content Include="LocalDev\7za_dir.txt" />
     <Content Include="LocalDev\ksp_dir.txt" />
     <Content Include="LocalDev\mono_exe.txt" />
@@ -108,20 +99,20 @@ set /p PDB2MDB_EXE_DIR=&lt;"$(ProjectDir)LocalDev\pdb2mdb_exe.txt"
 
 set /p ZA_DIR=&lt;"$(ProjectDir)LocalDev\7za_dir.txt"
 
-xcopy "$(TargetPath)" "$(ProjectDir)Distribution\GameData\JSI\$(ProjectName)\Plugins\" /Y
-xcopy "$(TargetDir)$(ProjectName).pdb" "$(ProjectDir)Distribution\GameData\JSI\$(ProjectName)\Plugins\" /Y
+xcopy "$(TargetPath)" "$(ProjectDir)..\Distribution\GameData\JSI\$(ProjectName)\Plugins\" /Y
+xcopy "$(TargetDir)$(ProjectName).pdb" "$(ProjectDir)..\Distribution\GameData\JSI\$(ProjectName)\Plugins\" /Y
 
 cd "$(TargetDir)"
 "%25MONO_EXE_DIR%25" "%25PDB2MDB_EXE_DIR%25" "$(TargetFileName)"
-xcopy "$(TargetDir)$(ProjectName).dll.mdb" "$(ProjectDir)Distribution\GameData\JSI\$(ProjectName)\Plugins\" /Y
+xcopy "$(TargetDir)$(ProjectName).dll.mdb" "$(ProjectDir)..\Distribution\GameData\JSI\$(ProjectName)\Plugins\" /Y
 
 where /q %25ZA_DIR%25:7za.exe
 if %25ERRORLEVEL%25 == 1 (  echo Cannot find 7-zip to package build) else (  echo Packaging build  ) 
 
 if exist "$(SolutionDir)$(ProjectName)_V@(VersionNumber).zip" del "$(SolutionDir)$(ProjectName)_V@(VersionNumber).zip"   
-%25ZA_DIR%257za.exe a -tzip "$(SolutionDir)$(ProjectName)_V@(VersionNumber).zip" "$(ProjectDir)Distribution\GameData" 
+%25ZA_DIR%257za.exe a -tzip "$(SolutionDir)$(ProjectName)_V@(VersionNumber).zip" "$(ProjectDir)..\Distribution\GameData" 
 %25ZA_DIR%257za.exe d -r "$(SolutionDir)$(ProjectName)_V@(VersionNumber).zip" "*.ddsified" "*.pdb" "*.mdb" "*.xcf" "*.blend" "thumbs.db"
-xcopy /E /Y "$(ProjectDir)Distribution\GameData" "%25KSP_DIR%25\GameData"</PostBuildEvent>
+xcopy /E /Y "$(ProjectDir)..\Distribution\GameData" "%25KSP_DIR%25\GameData"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
