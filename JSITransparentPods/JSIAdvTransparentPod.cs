@@ -641,7 +641,7 @@ namespace JSIAdvTransparentPods
                     // also if the user has set the LoadedInactive to False - we don't show TransparentPods that aren't on the active vessel.
                     // We turn it off rather than registering it for the PreCull list because if Stock Overlay is on the JSI camera is not active.
                     if (!vessel.isActiveVessel &&
-                            (JSIAdvPodsUtil.StockOverlayCamIsOn || !LoadGlobals.settings.LoadedInactive))
+                            (JSIAdvPodsUtil.StockOverlayCamIsOn || !LoadGlobals.Instance.LoadedInactive))
                     {
                         part.internalModel.SetVisible(false);
                         setVisible = false;
@@ -689,7 +689,7 @@ namespace JSIAdvTransparentPods
                     //If inactive vessel IVAs are turned on via the settings then we:
                     //Check for obstructions between this IVA and the Camera that may be on lower layers and turn off the IVA if there is one.
                     //Not a perfect solution..... and bad performance-wise. 
-                    if (LoadGlobals.settings.LoadedInactive)
+                    if (LoadGlobals.Instance.LoadedInactive)
                     {
                         if (JSIAdvTransparentPods.Instance != null &&
                             CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Flight)
