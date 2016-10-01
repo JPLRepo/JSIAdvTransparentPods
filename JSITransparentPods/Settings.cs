@@ -63,6 +63,7 @@ namespace JSIAdvTransparentPods
             //JSIAdvPodsUtil.debugLoggingEnabled = HighLogic.CurrentGame.Parameters.CustomParams<JSIATP_SettingsParms>().DebugLogging;
             //LoadedInactive = HighLogic.CurrentGame.Parameters.CustomParams<JSIATP_SettingsParms>().LoadedInactive;
             GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
+            GameEvents.onGameStatePostLoad.Add(onGameStatePostLoad);
             JSIAdvPodsUtil.Log("JSIAdvTransparentPods LoadGlobals Awake Complete");
         }
 
@@ -74,13 +75,23 @@ namespace JSIAdvTransparentPods
         public void OnDestroy()
         {
             //GameEvents.onGameSceneSwitchRequested.Remove(onGameSceneSwitchRequested);
+            GameEvents.onGameStatePostLoad.Remove(onGameStatePostLoad);
             GameEvents.OnGameSettingsApplied.Remove(onGameSettingsApplied);
+        }
+
+        public void onGameStatePostLoad(ConfigNode node)
+        {
+            onGameSettingsApplied();
         }
 
         public void onGameSettingsApplied()
         {
-            JSIAdvPodsUtil.debugLoggingEnabled = HighLogic.CurrentGame.Parameters.CustomParams<JSIATP_SettingsParms>().DebugLogging;
-            LoadedInactive = HighLogic.CurrentGame.Parameters.CustomParams<JSIATP_SettingsParms>().LoadedInactive;
+            if (HighLogic.CurrentGame != null)
+            {
+                JSIAdvPodsUtil.debugLoggingEnabled =
+                    HighLogic.CurrentGame.Parameters.CustomParams<JSIATP_SettingsParms>().DebugLogging;
+                LoadedInactive = HighLogic.CurrentGame.Parameters.CustomParams<JSIATP_SettingsParms>().LoadedInactive;
+            }
         }
 
         #region Assembly/Class Information
