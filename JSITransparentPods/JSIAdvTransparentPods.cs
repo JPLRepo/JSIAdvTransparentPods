@@ -69,7 +69,7 @@ namespace JSIAdvTransparentPods
         
         public void Update()
         {
-            if (Time.timeSinceLevelLoad < 1f)
+            if (Time.timeSinceLevelLoad < 1f || CameraManager.Instance == null)
                 return;
 
             //If Stock Overlay Cam is On or we are NOT in Flight camera mode (IE. Map or IVA mode), turn OFF our camera.

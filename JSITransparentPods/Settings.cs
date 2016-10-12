@@ -37,9 +37,10 @@ namespace JSIAdvTransparentPods
     public class LoadGlobals : MonoBehaviour
     {
         public static LoadGlobals Instance;
-        public static Settings settings;
-        private string globalConfigFilename;
-        private ConfigNode globalNode = new ConfigNode();
+        public bool LoadedInactive = true;
+        //public static Settings settings;
+        //private string globalConfigFilename;
+        //private ConfigNode globalNode = new ConfigNode();
 
         //Awake Event - when the DLL is loaded
         public void Awake()
@@ -48,17 +49,21 @@ namespace JSIAdvTransparentPods
                 return;
             Instance = this;
             DontDestroyOnLoad(this);
-            settings = new Settings();
-            globalConfigFilename = Path.Combine(_AssemblyFolder, "Config.cfg").Replace("\\", "/");
-            JSIAdvPodsUtil.Log("globalConfigFilename = " + globalConfigFilename);
-            if (!File.Exists(globalConfigFilename))
-            {
-                settings.Save(globalNode);
-                globalNode.Save(globalConfigFilename);
-            }
-            globalNode = ConfigNode.Load(globalConfigFilename);
-            settings.Load(globalNode);
-            JSIAdvPodsUtil.debugLoggingEnabled = settings.DebugLogging;
+            //settings = new Settings();
+            //globalConfigFilename = Path.Combine(_AssemblyFolder, "Config.cfg").Replace("\\", "/");
+            //JSIAdvPodsUtil.Log("globalConfigFilename = " + globalConfigFilename);
+            //if (!File.Exists(globalConfigFilename))
+            //{
+            //    settings.Save(globalNode);
+            //    globalNode.Save(globalConfigFilename);
+            //}
+            //globalNode = ConfigNode.Load(globalConfigFilename);
+            //settings.Load(globalNode);
+            //JSIAdvPodsUtil.debugLoggingEnabled = settings.DebugLogging;
+            //JSIAdvPodsUtil.debugLoggingEnabled = HighLogic.CurrentGame.Parameters.CustomParams<JSIATP_SettingsParms>().DebugLogging;
+            //LoadedInactive = HighLogic.CurrentGame.Parameters.CustomParams<JSIATP_SettingsParms>().LoadedInactive;
+            GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
+            GameEvents.onGameStatePostLoad.Add(onGameStatePostLoad);
             JSIAdvPodsUtil.Log("JSIAdvTransparentPods LoadGlobals Awake Complete");
         }
 
@@ -70,6 +75,23 @@ namespace JSIAdvTransparentPods
         public void OnDestroy()
         {
             //GameEvents.onGameSceneSwitchRequested.Remove(onGameSceneSwitchRequested);
+            GameEvents.onGameStatePostLoad.Remove(onGameStatePostLoad);
+            GameEvents.OnGameSettingsApplied.Remove(onGameSettingsApplied);
+        }
+
+        public void onGameStatePostLoad(ConfigNode node)
+        {
+            onGameSettingsApplied();
+        }
+
+        public void onGameSettingsApplied()
+        {
+            if (HighLogic.CurrentGame != null)
+            {
+                JSIAdvPodsUtil.debugLoggingEnabled =
+                    HighLogic.CurrentGame.Parameters.CustomParams<JSIATP_SettingsParms>().DebugLogging;
+                LoadedInactive = HighLogic.CurrentGame.Parameters.CustomParams<JSIATP_SettingsParms>().LoadedInactive;
+            }
         }
 
         #region Assembly/Class Information
@@ -93,61 +115,5 @@ namespace JSIAdvTransparentPods
         { get { return Path.GetDirectoryName(_AssemblyLocation); } }
 
         #endregion Assembly/Class Information
-    }
-
-    public class Settings
-    {
-        // this class stores the DeepFreeze Settings from the config file.
-        private const string configNodeName = "JSIAdvTransparentPodsSettings";
-
-        internal bool DebugLogging;
-        public bool LoadedInactive;
-
-
-
-        internal Settings()
-        {
-            DebugLogging = false;
-        }
-
-        //Settings Functions Follow
-
-        internal void Load(ConfigNode node)
-        {
-            if (node.HasNode(configNodeName))
-            {
-                ConfigNode settingsNode = node.GetNode(configNodeName);
-                DebugLogging = GetNodeValue(settingsNode, "DebugLogging", DebugLogging);
-                LoadedInactive = GetNodeValue(settingsNode, "LoadedInactive", LoadedInactive);
-
-            }
-        }
-
-        internal void Save(ConfigNode node)
-        {
-            ConfigNode settingsNode;
-            if (node.HasNode(configNodeName))
-            {
-                settingsNode = node.GetNode(configNodeName);
-                settingsNode.ClearData();
-            }
-            else
-            {
-                settingsNode = node.AddNode(configNodeName);
-            }
-            
-            settingsNode.AddValue("DebugLogging", DebugLogging);
-            settingsNode.AddValue("LoadedInactive", LoadedInactive);
-        }
-
-        internal bool GetNodeValue(ConfigNode confignode, string fieldname, bool defaultValue)
-        {
-            bool newValue;
-            if (confignode.HasValue(fieldname) && Boolean.TryParse(confignode.GetValue(fieldname), out newValue))
-            {
-                return newValue;
-            }
-            return defaultValue;
-        }
     }
 }

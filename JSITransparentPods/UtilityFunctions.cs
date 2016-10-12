@@ -35,7 +35,7 @@ namespace JSIAdvTransparentPods
 {
     public static class JSIAdvPodsUtil
     {
-        public static bool debugLoggingEnabled = true;
+        public static bool debugLoggingEnabled = false;
         public static bool cameraMaskShowsIVA;
 
         
