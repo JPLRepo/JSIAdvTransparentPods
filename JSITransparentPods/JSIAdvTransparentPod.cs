@@ -743,16 +743,17 @@ namespace JSIAdvTransparentPods
             float distance = Vector3.Distance(Target.position, Origin.position);
             RaycastHit[] hitInfo;
             Vector3 direction = (Target.position - Origin.position).normalized;
-            #if LINEDEBUG
-            drawMyLine(Origin.position, Target.position, Color.yellow, 1f);
-            #endif
-            hitInfo = Physics.RaycastAll(new Ray(Origin.position, direction), distance, 1148433);
+            if (JSIAdvTransparentPods.Instance.DebugShowLaser)
+            {
+                drawMyLine(Origin.position, Target.position, Color.yellow, 1f);
+            }
+            hitInfo = Physics.RaycastAll(new Ray(Origin.position, direction), distance, 3245585, QueryTriggerInteraction.Ignore);
 
             for (int i = 0; i < hitInfo.Length; i++)
             {
                 
-                JSIAdvPodsUtil.Log_Debug("View Obstructed by {0} , Origin: {1} , Target {2} , Direction {3} , Hit: {4}",
-                    hitInfo[i].collider.name, Origin.position, Target.position, direction, hitInfo[i].transform.position);
+                JSIAdvPodsUtil.Log_Debug("View Obstructed by {0} , Origin: {1} , Target {2} , Direction {3} , Hit: {4}, Layer: {5}",
+                    hitInfo[i].collider.name, Origin.position, Target.position, direction, hitInfo[i].transform.position, hitInfo[i].collider.gameObject.layer);
                 if (Origin.position != hitInfo[i].transform.position)
                 {
                     return true;
@@ -763,12 +764,12 @@ namespace JSIAdvTransparentPods
             return false;
         }
 
-        #if LINEDEBUG
-        internal void drawMyLine(Vector3 start, Vector3 end, Color color, float duration = 0.2f)
+        
+        internal void drawMyLine(Vector3 start, Vector3 end, Color color, float duration = 0.12f)
         {
             StartCoroutine(JSIAdvPodsUtil.drawLine(start, end, color, duration));
         }
-        #endif
+        
 
         public void VoodooRotate()
         {

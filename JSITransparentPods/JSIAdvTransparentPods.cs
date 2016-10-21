@@ -46,6 +46,9 @@ namespace JSIAdvTransparentPods
         private Part crewEVAFromPart;
         private Part crewEVAToPart;
 
+        internal bool DebugDontRotateIVACamera = true;
+        internal bool DebugShowLaser = false;
+
         public void Awake()
         {
             JSIAdvPodsUtil.Log_Debug("OnAwake in {0}", HighLogic.LoadedScene);
@@ -71,10 +74,21 @@ namespace JSIAdvTransparentPods
         {
             if (Time.timeSinceLevelLoad < 1f || CameraManager.Instance == null)
                 return;
+    #if DEBUGOPTIONS
+            if (GameSettings.MODIFIER_KEY.GetKey() && Input.GetKeyDown(KeyCode.A))
+            {
+                DebugDontRotateIVACamera = !DebugDontRotateIVACamera;
+                JSIAdvPodsUtil.SetCameraCullingMaskForIVA(Maincamera.name, DebugDontRotateIVACamera);
+            }
 
+            if (GameSettings.MODIFIER_KEY.GetKey() && Input.GetKeyDown(KeyCode.Q))
+            {
+                DebugShowLaser = !DebugShowLaser;
+            }
+    #endif
             //If Stock Overlay Cam is On or we are NOT in Flight camera mode (IE. Map or IVA mode), turn OFF our camera.
             if (JSIAdvPodsUtil.StockOverlayCamIsOn || 
-                (HighLogic.LoadedSceneIsFlight && CameraManager.Instance.currentCameraMode != CameraManager.CameraMode.Flight))
+            (HighLogic.LoadedSceneIsFlight && CameraManager.Instance.currentCameraMode != CameraManager.CameraMode.Flight))
             {
                 TurnoffIVACamera();
                 return;
