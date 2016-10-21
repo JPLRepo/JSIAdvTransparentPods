@@ -1,4 +1,6 @@
-﻿V0.1.8.0
+﻿V0.1.9.0
+Fixed issue where Part Triggers were being considered for blocking the Transparency of a part.
+V0.1.8.0
 Re-Compile for KSP 1.2
 Changed Settings to use new Stock Settings Integration.
 V0.1.7.0
