@@ -25,10 +25,8 @@
  ****************************************************************************/
 using System;
 using System.Collections.Generic;
- using System.Linq;
+using System.Linq;
 using System.Text;
-using KSP.UI.Screens;
- using KSP.UI.Screens.Flight;
 using UnityEngine;
 
 namespace JSIAdvTransparentPods
