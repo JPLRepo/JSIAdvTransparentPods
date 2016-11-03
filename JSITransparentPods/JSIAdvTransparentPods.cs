@@ -24,11 +24,9 @@
  * along with JSIAdvTransparentPods.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 
-using KSP.UI.Screens.Flight;
 using System;
 using System.Collections.Generic;
-using System.Linq;
- using UnityEngine;
+using UnityEngine;
 
 namespace JSIAdvTransparentPods
 {
@@ -112,14 +110,17 @@ namespace JSIAdvTransparentPods
                 //This is a bit of a performance hit, we are checking ALL loaded vessels to filter out NON JSIAdvTransparentPods.
                 //PartstoFilterFromIVADict will contain all loaded vessels that are not JSIAdvTransparentPods, as well as any that are but are too far from the 
                 //camera or are set to auto or OFF.
-                foreach (Vessel vsl in FlightGlobals.Vessels.Where(p => p.loaded && JSIAdvPodsUtil.ValidVslType(p)))
+                for(int j = 0; j < FlightGlobals.VesselsLoaded.Count; ++j)
                 {
-                    foreach (Part part in vsl.parts.Where(vp => vp.internalModel != null))
+                    if (JSIAdvPodsUtil.ValidVslType(FlightGlobals.VesselsLoaded[j]))
                     {
-                        if (!part.Modules.Contains("JSIAdvTransparentPod"))
+                        for(int i = 0; i < FlightGlobals.VesselsLoaded[j].parts.Count; ++i)
                         {
-                            if (!PartstoFilterfromIVADict.Contains(part))
-                                PartstoFilterfromIVADict.Add(part);
+                            if (FlightGlobals.VesselsLoaded[j].parts[i].internalModel != null && !FlightGlobals.VesselsLoaded[j].parts[i].Modules.Contains("JSIAdvTransparentPod"))
+                            {
+                                if (!PartstoFilterfromIVADict.Contains(FlightGlobals.VesselsLoaded[j].parts[i]))
+                                    PartstoFilterfromIVADict.Add(FlightGlobals.VesselsLoaded[j].parts[i]);
+                            }
                         }
                     }
                 }

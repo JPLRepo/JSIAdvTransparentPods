@@ -270,6 +270,8 @@ namespace JSIAdvTransparentPods
                 case VesselType.Rover:
                 case VesselType.Ship:
                 case VesselType.Station:
+                case VesselType.Plane:
+                case VesselType.Relay:
                     return true;
 
                 default:

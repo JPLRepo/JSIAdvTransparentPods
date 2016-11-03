@@ -1,4 +1,9 @@
-﻿V0.1.9.0
+﻿V0.1.11.0
+Re-Compile for KSP 1.2.1
+V0.1.10.0
+Fixed issue where Parts that are now considered "Plane" vessel type were being shown as transparentm (stock overlay) even if they were not
+defined as JSITransparentPods. ie: Stock Plane Cockpits.
+V0.1.9.0
 Fixed issue where Part Triggers were being considered for blocking the Transparency of a part.
 V0.1.8.0
 Re-Compile for KSP 1.2

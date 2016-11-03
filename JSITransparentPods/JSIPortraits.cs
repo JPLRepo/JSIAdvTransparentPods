@@ -24,11 +24,6 @@
  * along with JSIAdvTransparentPods.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using FinePrint;
 using KSP.UI.Screens.Flight;
 using UnityEngine;
 
@@ -39,38 +34,24 @@ namespace JSIAdvTransparentPods
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     class Portraits : MonoBehaviour
     {
-
-        internal static BindingFlags eFlags = BindingFlags.Instance | BindingFlags.NonPublic;
-
-        //reflecting protected methods inside a public class. Until KSP 1.1.x can rectify the situation.
-        internal static void UIControlsUpdate()
-        {
-            MethodInfo UIControlsUpdateMethod = typeof(KerbalPortraitGallery).GetMethod("UIControlsUpdate", eFlags);
-            UIControlsUpdateMethod.Invoke(KerbalPortraitGallery.Instance, null);
-        }
-
-        //reflecting protected methods inside a public class. Until KSP 1.1.x can rectify the situation.
-        internal static void DespawnInactivePortraits()
-        {
-            MethodInfo DespawnInactPortMethod = typeof(KerbalPortraitGallery).GetMethod("DespawnInactivePortraits", eFlags);
-            DespawnInactPortMethod.Invoke(KerbalPortraitGallery.Instance, null);
-        }
-
-        //reflecting protected methods inside a public class. Until KSP 1.1.x can rectify the situation.
-        internal static void DespawnPortrait(Kerbal kerbal)
-        {
-            MethodInfo DespawnPortraitMethod = typeof(KerbalPortraitGallery).GetMethod("DespawnPortrait", eFlags, Type.DefaultBinder, new Type[] {typeof(Kerbal)}, null);
-            DespawnPortraitMethod.Invoke(KerbalPortraitGallery.Instance, new object[] {kerbal});
-        }
-
         internal static bool HasPortrait(Kerbal crew)
         {
-            return KerbalPortraitGallery.Instance.Portraits.Any(p => p.crewMember == crew);
+            for (int i = 0; i < KerbalPortraitGallery.Instance.Portraits.Count; ++i)
+            {
+                if (KerbalPortraitGallery.Instance.Portraits[i].crewMember == crew)
+                    return true;
+            }
+            return false;
         }
 
         internal static bool InActiveCrew(Kerbal crew)
         {
-            return KerbalPortraitGallery.Instance.ActiveCrew.Any(p => p == crew);
+            for (int i = 0; i < KerbalPortraitGallery.Instance.ActiveCrew.Count; ++i)
+            {
+                if (KerbalPortraitGallery.Instance.ActiveCrew[i] == crew)
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -96,9 +77,9 @@ namespace JSIAdvTransparentPods
                 }
             }
             //Portraits List clean-up.
-            DespawnInactivePortraits(); //Despawn any portraits where CrewMember == null
-            DespawnPortrait(kerbal); //Despawn our Kerbal's portrait
-            UIControlsUpdate(); //Update UI controls
+            KerbalPortraitGallery.Instance.DespawnInactivePortraits(); //Despawn any portraits where CrewMember == null
+            KerbalPortraitGallery.Instance.DespawnPortrait(kerbal); //Despawn our Kerbal's portrait
+            KerbalPortraitGallery.Instance.UIControlsUpdate(); //Update UI controls
         }
 
         /// <summary>
