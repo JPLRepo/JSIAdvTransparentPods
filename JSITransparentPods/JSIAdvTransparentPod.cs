@@ -565,8 +565,8 @@ namespace JSIAdvTransparentPods
             if (Time.timeSinceLevelLoad < 1f) return;
 
             // In the editor, none of this logic should matter, even though the IVA probably exists already.
-            if (HighLogic.LoadedSceneIsEditor)
-            {
+            if (HighLogic.LoadedSceneIsEditor && !disableLoadingInEditor) 
+                {
                 if (transparentPodSetting == "ON" || (transparentPodSetting == "AUTO" && mouseOver))
                 {
                     // Make the internal model visible...
