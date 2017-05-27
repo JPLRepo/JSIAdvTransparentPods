@@ -61,6 +61,9 @@ namespace JSIAdvTransparentPods
         public bool combineDepthMaskShaders = false;
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "TransparentPod")] //ON = transparentpod on, OFF = transparentpod off, AUTO = on when focused.
+        public string displaytransparentPodSetting = "ON";
+
+        [KSPField(isPersistant = true)]
         public string transparentPodSetting = "ON";
 
         [KSPEvent(active = true, guiActive = true, guiActiveUnfocused = true, guiActiveEditor = true, unfocusedRange = 5f, name = "eventToggleTransparency", guiName = "TransparentPod")]
@@ -70,14 +73,17 @@ namespace JSIAdvTransparentPods
             {
                 case "ON":
                     transparentPodSetting = "OFF";
+                    displaytransparentPodSetting = transparentPodSetting;
                     break;
 
                 case "OFF":
                     transparentPodSetting = "AUTO";
+                    displaytransparentPodSetting = transparentPodSetting;
                     break;
 
                 default:
                     transparentPodSetting = "ON";
+                    displaytransparentPodSetting = transparentPodSetting;
                     break;
             }
         }
@@ -610,6 +616,7 @@ namespace JSIAdvTransparentPods
                 if (previsIVAobstructed && !isIVAobstructed)
                 {
                     transparentPodSetting = prevtransparentPodSetting;
+                    displaytransparentPodSetting = transparentPodSetting;
                     Events["eventToggleTransparency"].active = true;
                 }
                 previsIVAobstructed = isIVAobstructed;
@@ -707,6 +714,7 @@ namespace JSIAdvTransparentPods
                                         Events["eventToggleTransparency"].active = false;
                                         prevtransparentPodSetting = transparentPodSetting;
                                         transparentPodSetting = "Obstructed";
+                                        displaytransparentPodSetting = transparentPodSetting;
                                     }
                                     return;
                                 }
