@@ -29,6 +29,11 @@ namespace JSIAdvTransparentPods
             get { return "JSI Adv Trans Pods"; }
         }
 
+        public override string DisplaySection
+        {
+            get { return "JSI Adv Trans Pods"; }
+        }
+
         public override int SectionOrder
         {
             get { return 1; }
