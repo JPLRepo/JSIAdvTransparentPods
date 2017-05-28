@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using KSP.Localization;
 
 namespace JSIAdvTransparentPods
 {
@@ -59,25 +60,35 @@ namespace JSIAdvTransparentPods
 
         [KSPField]
         public bool combineDepthMaskShaders = false;
+         
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "#autoLOC_JISATP_00005")] //ON = transparentpod on, OFF = transparentpod off, AUTO = on when focused. ////#autoLOC_JISATP_00005 = Transparent Pod
+        public string displaytransparentPodSetting = "ON";
+
 
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "TransparentPod")] //ON = transparentpod on, OFF = transparentpod off, AUTO = on when focused.
+        public string displaytransparentPodSetting = "ON";
+
+        [KSPField(isPersistant = true)]
         public string transparentPodSetting = "ON";
 
-        [KSPEvent(active = true, guiActive = true, guiActiveUnfocused = true, guiActiveEditor = true, unfocusedRange = 5f, name = "eventToggleTransparency", guiName = "TransparentPod")]
+        [KSPEvent(active = true, guiActive = true, guiActiveUnfocused = true, guiActiveEditor = true, unfocusedRange = 5f, name = "eventToggleTransparency", guiName = "#autoLOC_JISATP_00005")] //#autoLOC_JISATP_00005 = Transparent Pod
         public void eventToggleTransparency()
         {
             switch (transparentPodSetting)
             {
                 case "ON":
                     transparentPodSetting = "OFF";
+                    displaytransparentPodSetting = cacheautoLOC_JISATP_00002;
                     break;
 
                 case "OFF":
                     transparentPodSetting = "AUTO";
+                    displaytransparentPodSetting = cacheautoLOC_JISATP_00003;
                     break;
 
                 default:
                     transparentPodSetting = "ON";
+                    displaytransparentPodSetting = cacheautoLOC_JISATP_00001;
                     break;
             }
         }
@@ -97,16 +108,44 @@ namespace JSIAdvTransparentPods
         [KSPField(isPersistant = true)]
         private string prevtransparentPodSetting = "ON";
         [KSPField(isPersistant = true)]
+        private string prevdisplaytransparentPodSetting = "ON";
+        [KSPField(isPersistant = true)]
         private bool previsIVAobstructed = false;
         private JSIZFighter JSIZfightertransparent;
         private JSIZFighter JSIZfighterStock;
         private Transform transparentPodTransform = null;
         private Transform stockOverlayTransform = null;
 
+        #region Localization Tag cache
+
+        private static string cacheautoLOC_JISATP_00001;
+        private static string cacheautoLOC_JISATP_00002;
+        private static string cacheautoLOC_JISATP_00003;
+        private static string cacheautoLOC_JISATP_00004;
+
+        private void cacheLocalStrings()
+        {
+            cacheautoLOC_JISATP_00001 = Localizer.Format("#autoLOC_JISATP_00001"); // #autoLOC_JISATP_00001 = ON
+            cacheautoLOC_JISATP_00002 = Localizer.Format("#autoLOC_JISATP_00002"); // #autoLOC_JISATP_00002 = OFF
+            cacheautoLOC_JISATP_00003 = Localizer.Format("#autoLOC_JISATP_00003"); // #autoLOC_JISATP_00003 = AUTO
+            cacheautoLOC_JISATP_00004 = Localizer.Format("#autoLOC_JISATP_00004"); // #autoLOC_JISATP_00004 = The windows of this capsule have had advanced cleaning.
+        }
+
+        #endregion
+
+        public override void OnAwake()
+        {            
+            base.OnAwake();
+            cacheLocalStrings();
+        }
 
         public override string GetInfo()
         {
-            return "The windows of this capsule have had advanced cleaning.";
+            if (string.IsNullOrEmpty(cacheautoLOC_JISATP_00004))
+            {
+                cacheLocalStrings();
+            }
+            return cacheautoLOC_JISATP_00004;
         }
 
         public override void OnStart(StartState state)
@@ -610,6 +649,7 @@ namespace JSIAdvTransparentPods
                 if (previsIVAobstructed && !isIVAobstructed)
                 {
                     transparentPodSetting = prevtransparentPodSetting;
+                    displaytransparentPodSetting = prevdisplaytransparentPodSetting;
                     Events["eventToggleTransparency"].active = true;
                 }
                 previsIVAobstructed = isIVAobstructed;
@@ -706,7 +746,9 @@ namespace JSIAdvTransparentPods
                                     {
                                         Events["eventToggleTransparency"].active = false;
                                         prevtransparentPodSetting = transparentPodSetting;
+                                        prevdisplaytransparentPodSetting = displaytransparentPodSetting;
                                         transparentPodSetting = "Obstructed";
+                                        displaytransparentPodSetting = transparentPodSetting;
                                     }
                                     return;
                                 }
