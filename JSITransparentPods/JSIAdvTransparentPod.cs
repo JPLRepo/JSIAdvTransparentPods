@@ -63,11 +63,7 @@ namespace JSIAdvTransparentPods
          
         [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "#autoLOC_JISATP_00005")] //ON = transparentpod on, OFF = transparentpod off, AUTO = on when focused. ////#autoLOC_JISATP_00005 = Transparent Pod
         public string displaytransparentPodSetting = "ON";
-
-
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "TransparentPod")] //ON = transparentpod on, OFF = transparentpod off, AUTO = on when focused.
-        public string displaytransparentPodSetting = "ON";
-
+        
         [KSPField(isPersistant = true)]
         public string transparentPodSetting = "ON";
 
