@@ -1,4 +1,9 @@
-﻿V0.1.16.0
+﻿V0.1.17.0
+Re-Compile for KSP 1.5.1.
+Added German Localization (thanks Nils277)
+Added Spanish Localization (thanks Fitiales)
+Added Chinese Localization (thanks 6DYZBX)
+V0.1.16.0
 Re-Compile for KSP 1.4.1
 V0.1.15.0
 Re-Compile for KSP 1.3.1
