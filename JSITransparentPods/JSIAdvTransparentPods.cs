@@ -177,6 +177,8 @@ namespace JSIAdvTransparentPods
                 //Attach a Culler class to the camera to cull objects we don't want rendered.
                 if (IVACamJSICameraCuller == null && HighLogic.LoadedSceneIsFlight)
                     IVACamJSICameraCuller = IVAcamera.gameObject.AddComponent<JSIIVACameraEvents>();
+
+                IVAcamera.allowHDR = false;
             }
             //Finally turn the new camera on.
             TurnonIVACamera();

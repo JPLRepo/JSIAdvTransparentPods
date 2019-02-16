@@ -231,7 +231,7 @@ namespace JSIAdvTransparentPods
                 }
                 if (transparentShader == null)
                 {
-                    JSIAdvPodsUtil.Log("transparentShader {0} not found.", transparentShaderName);
+                    JSIAdvPodsUtil.Log("transpartShader {0} not found.", transparentShaderName);
                 }
                 foreach (string transformName in transparentTransforms.Split('|'))
                 {
