@@ -1,4 +1,7 @@
-﻿V0.1.17.0
+﻿V0.1.18.0
+Re-Compile for KSP 1.6.x.
+Fix Camera HDR issue (thanks LinuxGuruGamer)
+V0.1.17.0
 Re-Compile for KSP 1.5.1.
 Added German Localization (thanks Nils277)
 Added Spanish Localization (thanks Fitiales)
