@@ -38,7 +38,7 @@ namespace JSIAdvTransparentPods
         public string transparentTransforms = string.Empty;
 
         [KSPField]
-        public string transparentShaderName = "Legacy Shaders/Transparent/Specular";
+        public string transparentShaderName = "Legacy Shaders/Transparent/Diffuse";
 
         [KSPField]
         public string opaqueShaderName = string.Empty;
@@ -242,8 +242,11 @@ namespace JSIAdvTransparentPods
                         {
                             //We both change the shader and backup the original shader so we can undo it later.
                             Shader backupShader = tr.GetComponent<Renderer>().material.shader;
-                            tr.GetComponent<Renderer>().material.shader = transparentShader;
-                            shadersBackup.Add(new KeyValuePair<Transform, Shader>(tr, backupShader));
+                            if (backupShader != null)
+                            {
+                                backupShader = transparentShader;
+                                shadersBackup.Add(new KeyValuePair<Transform, Shader>(tr, backupShader));
+                            }
                         }
                         if (part.internalModel != null)
                         {
@@ -252,8 +255,11 @@ namespace JSIAdvTransparentPods
                             {
                                 // We both change the shader and backup the original shader so we can undo it later.
                                 Shader backupShader = itr.GetComponent<Renderer>().material.shader;
-                                itr.GetComponent<Renderer>().material.shader = transparentShader;
-                                shadersBackup.Add(new KeyValuePair<Transform, Shader>(itr, backupShader));
+                                if (backupShader != null)
+                                {
+                                    backupShader = transparentShader;
+                                    shadersBackup.Add(new KeyValuePair<Transform, Shader>(itr, backupShader));
+                                }
                             }
                         }
                     }
