@@ -294,6 +294,29 @@ namespace JSIAdvTransparentPods
             GameObject.Destroy(myLine);
         }
 
+        internal static object GetObjectMethod(object o, string methodName)
+        {
+            object outputObj = new object();
+            bool foundObj = false;
+            foreach (MethodInfo method in o.GetType().GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Public))
+            {
+                if (!method.IsStatic)
+                {
+                    if (method.Name == methodName)
+                    {
+                        foundObj = true;
+                        outputObj = method;
+                        break;
+                    }
+                }
+            }
+            if (foundObj)
+            {
+                return outputObj;
+            }
+            return null;
+        }
+
         #region Logging
         // Logging Functions
         // Name of the Assembly that is running this MonoBehaviour

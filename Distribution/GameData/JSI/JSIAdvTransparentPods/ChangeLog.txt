@@ -1,4 +1,6 @@
-﻿V0.1.18.0
+﻿V0.1.19.0
+Fixed issue with legacy transparent specular shader no longer available in KSP - causing some parts using this mod to appear with Pink (invalid) material/shader assignments.
+V0.1.18.0
 Re-Compile for KSP 1.6.x.
 Fix Camera HDR issue (thanks LinuxGuruGamer)
 V0.1.17.0
