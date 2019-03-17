@@ -26,6 +26,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using UnityEngine;
 using KSP.Localization;
@@ -111,6 +112,8 @@ namespace JSIAdvTransparentPods
         private JSIZFighter JSIZfighterStock;
         private Transform transparentPodTransform = null;
         private Transform stockOverlayTransform = null;
+        private object DeepFreezerModule;
+        private MethodInfo DeepFreezerMethod;
 
         #region Localization Tag cache
 
@@ -189,6 +192,11 @@ namespace JSIAdvTransparentPods
                 try
                 {
                     part.CreateInternalModel();
+                    if (part.internalModel != null && HighLogic.LoadedSceneIsFlight)
+                    {
+                        part.internalModel.Initialize(part);
+                        part.internalModel.SpawnCrew();
+                    }
                 }
                 catch (Exception e)
                 {
@@ -204,17 +212,18 @@ namespace JSIAdvTransparentPods
                 // that CreateInternalModel() call above here returns null for
                 // non-root parts until one exits the VAB and returns.
                 // If the internalModel doesn't exist yet, I find the config
-                // for this part, extract the INTERNAL node, and try to create
-                // the model myself. Awfully roundabout.
+                // for this part, and create the Model ourselves.
 
                 JSIAdvPodsUtil.Log_Debug("Let's see if anyone included parts so I can assemble the interior");
-                ConfigNode ipNameNode = (from cfg in GameDatabase.Instance.GetConfigs("PART")
-                                         where cfg.url == part.partInfo.partUrl
-                                         select cfg.config.GetNode("INTERNAL")).FirstOrDefault();
-
-                if (ipNameNode != null)
+                
+                if (part.partInfo != null && part.partInfo.internalConfig != null && part.partInfo.internalConfig.HasData)
+                { 
+                    part.AddInternalPart(part.partInfo.internalConfig);                    
+                }
+                if (part.internalModel != null && HighLogic.LoadedSceneIsFlight)
                 {
-                    part.internalModel = part.AddInternalPart(ipNameNode);
+                    part.internalModel.Initialize(part);
+                    part.internalModel.SpawnCrew();
                 }
             }
 
@@ -522,7 +531,10 @@ namespace JSIAdvTransparentPods
                     else
                     {
                         part.CreateInternalModel();
-                        part.internalModel.Initialize(part);
+                        if (part.internalModel != null)
+                        {
+                            part.internalModel.Initialize(part);
+                        }
                     }
                     part.internalModel.SetVisible(true);
                     setVisible = true;
@@ -530,6 +542,29 @@ namespace JSIAdvTransparentPods
                     knownRootPart = vessel.rootPart;
                     lastActiveVessel = FlightGlobals.ActiveVessel;
                     ResetShadersBackup();
+                    if (DeepFreezerModule != null && DeepFreezerMethod != null)
+                    {
+                        DeepFreezerMethod.Invoke(DeepFreezerModule, null);
+                    }
+                    else
+                    {
+                        if (DeepFreezerModule == null && part.Modules.Contains("DeepFreezer"))
+                        {
+                            DeepFreezerModule = part.Modules["DeepFreezer"];
+                        }
+                        if (DeepFreezerModule != null)
+                        {
+                            object methodObj = JSIAdvPodsUtil.GetObjectMethod(DeepFreezerModule, "InternalModelCreated");
+                            if (methodObj != null)
+                            {
+                                DeepFreezerMethod = methodObj as MethodInfo;
+                                if (DeepFreezerMethod != null)
+                                {
+                                    DeepFreezerMethod.Invoke(DeepFreezerModule, null);
+                                }
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception ex)
