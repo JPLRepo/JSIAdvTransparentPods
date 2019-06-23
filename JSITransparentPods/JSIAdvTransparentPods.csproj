@@ -55,14 +55,10 @@
     <None Include="..\Distribution\GameData\JSI\JSIAdvTransparentPods\JSIAdvTransparentPods.version">
       <Link>JSIAdvTransparentPods.version</Link>
     </None>
-    <None Include="Panels\PanelDragger.cs" />
-    <None Include="Panels\PanelFocuser.cs" />
-    <None Include="Panels\PanelResizer.cs" />
     <Compile Include="JSIPortraits.cs" />
     <Compile Include="JSIZfighter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings.cs" />
-    <None Include="Panels\UIWindowHelper.cs" />
     <Compile Include="SettingsParams.cs" />
     <Compile Include="UtilityFunctions.cs" />
   </ItemGroup>
