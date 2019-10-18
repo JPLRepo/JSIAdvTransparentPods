@@ -46,9 +46,9 @@ namespace JSIAdvTransparentPods
 
         internal static bool InActiveCrew(Kerbal crew)
         {
-            for (int i = 0; i < KerbalPortraitGallery.Instance.ActiveCrew.Count; ++i)
+            for (int i = 0; i < KerbalPortraitGallery.Instance.ActiveCrewItems.Count; ++i)
             {
-                if (KerbalPortraitGallery.Instance.ActiveCrew[i] == crew)
+                if (KerbalPortraitGallery.Instance.ActiveCrewItems[i].kerbal != null && KerbalPortraitGallery.Instance.ActiveCrewItems[i].kerbal.name == crew.name)
                     return true;
             }
             return false;
