@@ -70,6 +70,8 @@ namespace JSIAdvTransparentPods
         public void Start()
         {
             //GameEvents.onGameSceneSwitchRequested.Add(onGameSceneSwitchRequested);
+            JSIATPGameEvents.onATPResetIVA = new EventData<Part>("onATPResetIVA");
+            JSIATPGameEvents.onATPPodSettingChanged = new EventData<Part, string>("onATPPodSettingChanged");
         }
 
         public void OnDestroy()

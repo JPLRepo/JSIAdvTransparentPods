@@ -88,6 +88,8 @@ namespace JSIAdvTransparentPods
                     displaytransparentPodSetting = cacheautoLOC_JISATP_00001;
                     break;
             }
+
+            JSIATPGameEvents.onATPPodSettingChanged.Fire(part, transparentPodSetting);
         }
         private Part knownRootPart;
         private Vessel lastActiveVessel;
@@ -240,7 +242,7 @@ namespace JSIAdvTransparentPods
                 }
                 if (transparentShader == null)
                 {
-                    JSIAdvPodsUtil.Log("transpartShader {0} not found.", transparentShaderName);
+                    JSIAdvPodsUtil.Log("transparentShader {0} not found.", transparentShaderName);
                 }
                 foreach (string transformName in transparentTransforms.Split('|'))
                 {
@@ -526,44 +528,67 @@ namespace JSIAdvTransparentPods
                     // If the internal model doesn't yet exist, this call will implicitly create it anyway.
                     // It will also initialise it, which in this case implies moving it into the correct location in internal space
                     // and populate it with crew, which is what we want.
+                    bool internalModelCreated = false;
                     if (part.CrewCapacity > 0)
-                        part.SpawnIVA();
+                    {
+                        if (part.internalModel == null)
+                        {
+                            part.CreateInternalModel();
+                            if (part.internalModel != null)
+                            {
+                                internalModelCreated = true;
+                                part.internalModel.Initialize(part);
+                                part.internalModel.SpawnCrew();
+                            }
+                        }
+                    }
                     else
                     {
                         part.CreateInternalModel();
                         if (part.internalModel != null)
                         {
+                            internalModelCreated = true;
                             part.internalModel.Initialize(part);
                         }
                     }
-                    part.internalModel.SetVisible(true);
+
+                    if (part.internalModel != null)
+                    {
+                        part.internalModel.SetVisible(true);
+                    }
                     setVisible = true;
                     // And then we remember the root part and the active vessel these coordinates refer to.
                     knownRootPart = vessel.rootPart;
                     lastActiveVessel = FlightGlobals.ActiveVessel;
                     ResetShadersBackup();
-                    if (DeepFreezerModule != null && DeepFreezerMethod != null)
+                    if (internalModelCreated)
                     {
-                        DeepFreezerMethod.Invoke(DeepFreezerModule, null);
-                    }
-                    else
-                    {
-                        if (DeepFreezerModule == null && part.Modules.Contains("DeepFreezer"))
+                        if (DeepFreezerModule != null && DeepFreezerMethod != null)
                         {
-                            DeepFreezerModule = part.Modules["DeepFreezer"];
+                            DeepFreezerMethod.Invoke(DeepFreezerModule, null);
                         }
-                        if (DeepFreezerModule != null)
+                        else
                         {
-                            object methodObj = JSIAdvPodsUtil.GetObjectMethod(DeepFreezerModule, "InternalModelCreated");
-                            if (methodObj != null)
+                            if (DeepFreezerModule == null && part.Modules.Contains("DeepFreezer"))
                             {
-                                DeepFreezerMethod = methodObj as MethodInfo;
-                                if (DeepFreezerMethod != null)
+                                DeepFreezerModule = part.Modules["DeepFreezer"];
+                            }
+
+                            if (DeepFreezerModule != null)
+                            {
+                                object methodObj = JSIAdvPodsUtil.GetObjectMethod(DeepFreezerModule, "InternalModelCreated");
+                                if (methodObj != null)
                                 {
-                                    DeepFreezerMethod.Invoke(DeepFreezerModule, null);
+                                    DeepFreezerMethod = methodObj as MethodInfo;
+                                    if (DeepFreezerMethod != null)
+                                    {
+                                        DeepFreezerMethod.Invoke(DeepFreezerModule, null);
+                                    }
                                 }
                             }
                         }
+
+                        JSIATPGameEvents.onATPResetIVA.Fire(part);
                     }
                 }
             }

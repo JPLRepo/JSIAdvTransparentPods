@@ -1,4 +1,9 @@
-﻿V0.1.21.0
+﻿V0.1.22.0
+Re-Compile for KSP 1.9.x.
+Portuguese Translations - thanks go to clustermage.
+Added GameEvent JSIATPGameEvents.onATPResetIVA when JSIATP resets the IVA on a part.
+Added GameEvent JSIATPGameEvents.onATPPodSettingChanged when the Pod setting is changed ON/OFF/AUTO by the user.
+V0.1.21.0
 Re-Compile for KSP 1.8.x.
 V0.1.20.0
 Re-Compile for KSP 1.7.x.

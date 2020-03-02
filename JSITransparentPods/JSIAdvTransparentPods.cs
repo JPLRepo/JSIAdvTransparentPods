@@ -41,11 +41,8 @@ namespace JSIAdvTransparentPods
         internal Camera Maincamera;
         internal Transform MaincameraTransform;
         private Component IVACamJSICameraCuller;
-        private Part crewEVAFromPart;
-        private Part crewEVAToPart;
-
-        internal bool DebugDontRotateIVACamera = true;
-        internal bool DebugShowLaser = false;
+        
+        public bool DebugShowLaser = false;
 
         public void Awake()
         {

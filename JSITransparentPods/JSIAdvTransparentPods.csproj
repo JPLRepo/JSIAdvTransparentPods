@@ -62,6 +62,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GameEvents.cs" />
     <Compile Include="JSIAdvTransparentPod.cs" />
     <Compile Include="JSIAdvTransparentPods.cs" />
     <None Include="..\Distribution\GameData\JSI\JSIAdvTransparentPods\JSIAdvTransparentPods.version">
