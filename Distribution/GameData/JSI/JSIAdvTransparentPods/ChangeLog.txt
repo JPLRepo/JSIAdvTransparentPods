@@ -1,4 +1,6 @@
-﻿V0.1.22.0
+﻿V0.1.23.0
+Re-Compile for KSP 1.10.x.
+V0.1.22.0
 Re-Compile for KSP 1.9.x.
 Portuguese Translations - thanks go to clustermage.
 Added GameEvent JSIATPGameEvents.onATPResetIVA when JSIATP resets the IVA on a part.
