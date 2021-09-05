@@ -1,4 +1,7 @@
-﻿V0.1.23.0
+﻿V0.1.24.0
+Re-compile for KSP 1.12.x.
+Fix version checking.
+V0.1.23.0
 Re-Compile for KSP 1.10.x.
 V0.1.22.0
 Re-Compile for KSP 1.9.x.
